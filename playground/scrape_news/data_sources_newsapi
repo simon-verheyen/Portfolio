@@ -1,0 +1,130 @@
+id,name,category,language,country
+abc-news,ABC News,general,en,us
+abc-news-au,ABC News (AU),general,en,au
+aftenposten,Aftenposten,general,no,no
+al-jazeera-english,Al Jazeera English,general,en,us
+ansa,ANSA.it,general,it,it
+argaam,Argaam,business,ar,sa
+ars-technica,Ars Technica,technology,en,us
+ary-news,Ary News,general,ud,pk
+associated-press,Associated Press,general,en,us
+australian-financial-review,Australian Financial Review,business,en,au
+axios,Axios,general,en,us
+bbc-news,BBC News,general,en,gb
+bbc-sport,BBC Sport,sports,en,gb
+bild,Bild,general,de,de
+blasting-news-br,Blasting News (BR),general,pt,br
+bleacher-report,Bleacher Report,sports,en,us
+bloomberg,Bloomberg,business,en,us
+breitbart-news,Breitbart News,general,en,us
+business-insider,Business Insider,business,en,us
+business-insider-uk,Business Insider (UK),business,en,gb
+buzzfeed,Buzzfeed,entertainment,en,us
+cbc-news,CBC News,general,en,ca
+cbs-news,CBS News,general,en,us
+cnbc,CNBC,business,en,us
+cnn,CNN,general,en,us
+cnn-es,CNN Spanish,general,es,us
+crypto-coins-news,Crypto Coins News,technology,en,us
+der-tagesspiegel,Der Tagesspiegel,general,de,de
+die-zeit,Die Zeit,business,de,de
+el-mundo,El Mundo,general,es,es
+engadget,Engadget,technology,en,us
+entertainment-weekly,Entertainment Weekly,entertainment,en,us
+espn,ESPN,sports,en,us
+espn-cric-info,ESPN Cric Info,sports,en,us
+financial-post,Financial Post,business,en,ca
+focus,Focus,general,de,de
+football-italia,Football Italia,sports,en,it
+fortune,Fortune,business,en,us
+four-four-two,FourFourTwo,sports,en,gb
+fox-news,Fox News,general,en,us
+fox-sports,Fox Sports,sports,en,us
+globo,Globo,general,pt,br
+google-news,Google News,general,en,us
+google-news-ar,Google News (Argentina),general,es,ar
+google-news-au,Google News (Australia),general,en,au
+google-news-br,Google News (Brasil),general,pt,br
+google-news-ca,Google News (Canada),general,en,ca
+google-news-fr,Google News (France),general,fr,fr
+google-news-in,Google News (India),general,en,in
+google-news-is,Google News (Israel),general,he,is
+google-news-it,Google News (Italy),general,it,it
+google-news-ru,Google News (Russia),general,ru,ru
+google-news-sa,Google News (Saudi Arabia),general,ar,sa
+google-news-uk,Google News (UK),general,en,gb
+goteborgs-posten,Göteborgs-Posten,general,se,se
+gruenderszene,Gruenderszene,technology,de,de
+hacker-news,Hacker News,technology,en,us
+handelsblatt,Handelsblatt,business,de,de
+ign,IGN,entertainment,en,us
+il-sole-24-ore,Il Sole 24 Ore,business,it,it
+independent,Independent,general,en,gb
+infobae,Infobae,general,es,ar
+info-money,InfoMoney,business,pt,br
+la-gaceta,La Gaceta,general,es,ar
+la-nacion,La Nacion,general,es,ar
+la-repubblica,La Repubblica,general,it,it
+le-monde,Le Monde,general,fr,fr
+lenta,Lenta,general,ru,ru
+lequipe,L'equipe,sports,fr,fr
+les-echos,Les Echos,business,fr,fr
+liberation,Libération,general,fr,fr
+marca,Marca,sports,es,es
+mashable,Mashable,entertainment,en,us
+medical-news-today,Medical News Today,health,en,us
+msnbc,MSNBC,general,en,us
+mtv-news,MTV News,entertainment,en,us
+mtv-news-uk,MTV News (UK),entertainment,en,gb
+national-geographic,National Geographic,science,en,us
+national-review,National Review,general,en,us
+nbc-news,NBC News,general,en,us
+news24,News24,general,en,za
+new-scientist,New Scientist,science,en,us
+news-com-au,News.com.au,general,en,au
+newsweek,Newsweek,general,en,us
+new-york-magazine,New York Magazine,general,en,us
+next-big-future,Next Big Future,science,en,us
+nfl-news,NFL News,sports,en,us
+nhl-news,NHL News,sports,en,us
+nrk,NRK,general,no,no
+politico,Politico,general,en,us
+polygon,Polygon,entertainment,en,us
+rbc,RBC,general,ru,ru
+recode,Recode,technology,en,us
+reddit-r-all,Reddit /r/all,general,en,us
+reuters,Reuters,general,en,us
+rt,RT,general,ru,ru
+rte,RTE,general,en,ie
+rtl-nieuws,RTL Nieuws,general,nl,nl
+sabq,SABQ,general,ar,sa
+spiegel-online,Spiegel Online,general,de,de
+svenska-dagbladet,Svenska Dagbladet,general,se,se
+t3n,T3n,technology,de,de
+talksport,TalkSport,sports,en,gb
+techcrunch,TechCrunch,technology,en,us
+techcrunch-cn,TechCrunch (CN),technology,zh,zh
+techradar,TechRadar,technology,en,us
+the-american-conservative,The American Conservative,general,en,us
+the-globe-and-mail,The Globe And Mail,general,en,ca
+the-hill,The Hill,general,en,us
+the-hindu,The Hindu,general,en,in
+the-huffington-post,The Huffington Post,general,en,us
+the-irish-times,The Irish Times,general,en,ie
+the-jerusalem-post,The Jerusalem Post,general,en,is
+the-lad-bible,The Lad Bible,entertainment,en,gb
+the-next-web,The Next Web,technology,en,us
+the-sport-bible,The Sport Bible,sports,en,gb
+the-times-of-india,The Times of India,general,en,in
+the-verge,The Verge,technology,en,us
+the-wall-street-journal,The Wall Street Journal,business,en,us
+the-washington-post,The Washington Post,general,en,us
+the-washington-times,The Washington Times,general,en,us
+time,Time,general,en,us
+usa-today,USA Today,general,en,us
+vice-news,Vice News,general,en,us
+wired,Wired,technology,en,us
+wired-de,Wired.de,technology,de,de
+wirtschafts-woche,Wirtschafts Woche,business,de,de
+xinhua-net,Xinhua Net,general,zh,zh
+ynet,Ynet,general,he,is
