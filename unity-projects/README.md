@@ -1,3 +1,9 @@
-Folder containing old unity projects, writen in C#
+# Unity projects
 
-As well as scrape_news which contains python scripts that are made to periodically collect news infomation from google's NewsAPI.
+Folder containing old unity projects, writen in C#.
+Most are small games that are playable, except for the solar system simulator.
+these have been build using the unity engine's physics engine as well as multiple other features.
+
+Only the cave generator being more script heavy, where unity is more used to visualise while the scripts, in C#, are doing the heavy lifting.
+
+C# scripts can be found in every project folder in the subfolder: assets/scripts
