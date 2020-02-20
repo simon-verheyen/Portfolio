@@ -100,3 +100,14 @@ def get_data(countries=[], attr=[], from_param=1800, to=2018):
         Dict[df.name] = df
 
     return Dict
+
+
+def combine_dict(Dict):
+
+    new_df = pd.DataFrame(columns=list(Dict.values())[0].columns)
+
+    for entry in Dict:
+        Dict[entry]['index'] = Dict[entry].index
+        new_df = new_df.append(Dict[entry], ignore_index=True, sort=False)
+
+    return new_df
