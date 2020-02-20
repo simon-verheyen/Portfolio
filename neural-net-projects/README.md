@@ -1,13 +1,18 @@
-Folder containing most of my personal projects surounding neural networks.
+# Neural network projects
 
-ANN_C (C): 
-  Creating a functional neural network from scratch in C coding language as test for my understanding of the language.
-  The project is near complete, only the destruction of the NN, through deallocation of memory, needs to be implimented
+This folder containing some of my personal projects surrounding neural networks.
+
+### ANN_C (C)
+  This was to test practice my proficienty with C by an attempt to code a functional neural network from scratch.
+  The project is near complete, only the destruction of the NN, through deallocation of memory, needs to be implimented.
   
-Flappy AI (Python):
-  Self created version of flappy birds, connected to a population of neural networks that learn the game through a genetic learning algoritmn.
-  All code is self writen with knowledge from courses
+### Flappy AI (Python)
+  This is a project where i first created a rudamentairy version of the game 'Flappy Birds' in python.
+  After which I connect it to a population of neural networks who can learn to play the game in some 15 generations through a genetic learning algorithm 
+  (Inspired by code-bullet on youtube)
   
-Dino Run (Python):
-  Self created version of Dino Run (the chrome game),  connected to a population of neural networks that learn the game through a genetic learning algoritmn.
-  All code is self writen with knowledge from courses
+### Dino Run (Python)
+  This is a project where i first created a rudamentairy version of the game 'Dino Run' from the google browser in python.
+  After which I connect it to a population of neural networks who can learn to play the game in some 15 generations through a genetic learning algorithm
+    (Inspired by code-bullet on youtube)
+  
