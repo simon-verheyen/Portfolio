@@ -13,6 +13,17 @@ def plot_big(df,  title=''):
     plt.show()
 
 
+def plot_small(df,  title=''):
+    plt.figure(figsize=(15, 5))
+    plt.suptitle(title)
+
+    for col in df:
+        plt.plot(df.index, df[col], label=col)
+    plt.title(df.name)
+    plt.legend()
+    plt.show()
+
+
 def plot_side_by_side(df1, df2, title=''):
     plt.figure(figsize=(15, 5))
     plt.suptitle(title)
@@ -41,23 +52,23 @@ def plot_dict(Dict):
             temp_name = ''
 
     if temp_name:
-        plot_big(Dict[temp_name])
+        plot_small(Dict[temp_name])
 
 
-def normalize_df(df):
-    averages = np.sum(df) / len(df)
-    new_df = df / averages
+def normalize(data):
+    if type(data) is dict:
+        norm_dict = {}
+        for entry in data:
+            df_norm = normalize(data[entry])
+            norm_dict[entry] = df_norm
 
-    new_df.name = df.name
+        return norm_dict
 
-    return new_df
+    else:
+        averages = np.sum(data) / len(data)
+        stand_div = np.std(data, axis=0)
 
+        new_df = (data - averages) / stand_div
+        new_df.name = data.name
 
-def normalize_dict(Dict):
-    dict_norm = {}
-    for entry in Dict:
-        df_norm = normalize_df(Dict[entry])
-
-        dict_norm[df_norm.name] = df_norm
-
-    return dict_norm
+        return new_df
