@@ -9,7 +9,9 @@ def train_network(layer_dims, data, Y, iterations, learning_rate, lambd, problem
     Y = np.array(Y).reshape(-1, 1)
 
     for i in range(iterations):
+        print("Iter")
         for j in range(data.shape[0]):
+            print("entry")
             entry = np.array([data.values[j]]).T
             Ypr, mem = tools_nn.model_forw(entry, param, problem_type)
             grads = tools_nn.model_back(Y[j], Ypr, mem, problem_type)

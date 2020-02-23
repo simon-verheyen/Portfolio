@@ -3,6 +3,7 @@ import numpy as np
 """ Verify if adam is ok!!! """
 
 
+# Initialize parameters with regularization to combat high weights in deep network for faster gradient descent
 def init_param_he(layer_dims):
     np.random.seed()
     param = {}
@@ -18,6 +19,7 @@ def init_param_he(layer_dims):
     return param
 
 
+# Sigmoid is used as the activation function for classification problems
 def sigmoid(Z):
     A = 1 / (1 + np.exp(-Z))
     mem = Z
@@ -27,6 +29,7 @@ def sigmoid(Z):
     return A, mem
 
 
+# Derivative of the sigmoid function used during backpropagation to get the nn parameter gradients
 def sigmoid_backprop(dA, mem):
     Z = mem
 
@@ -38,6 +41,7 @@ def sigmoid_backprop(dA, mem):
     return dZ
 
 
+# Relu is used as the activation function for hidden layers, as well as for regression problems
 def relu(Z):
     A = np.maximum(0, Z)
     mem = Z
@@ -47,29 +51,29 @@ def relu(Z):
     return A, mem
 
 
+# Derivative of the sigmoid function used during backpropagation to get the nn parameter gradients
 def relu_backprop(dA, mem):
     Z = mem
 
     dZ = np.array(dA, copy=True)
-
-    print(dZ.shape)
-    print(Z.shape)
     dZ[Z <= 0] = 0
 
-    assert (dZ == dA)
+    assert (dZ.shape == dA.shape)
 
     return dZ
 
 
+# Linear forward step to aply the weights of a layer
 def lin_forw(A, W, b):
     Z = np.dot(W, A) + b
-    mem = (Z, A, b)
+    mem = A, W, b
 
     assert (Z.shape == (W.shape[0], A.shape[1]))
 
     return Z, mem
 
 
+# Dirivitve to get the gradients fr the nn parameters
 def lin_back(dZ, mem):
     A_prev, W, b = mem
 
@@ -86,6 +90,7 @@ def lin_back(dZ, mem):
     return dA_prev, dW, db
 
 
+# Full step forward, combining the linear forward step with the activation function to create an output per layer
 def lin_act_forw(A_prev, W, b, act):
     Z, lin_mem = lin_forw(A_prev, W, b)
 
@@ -101,6 +106,8 @@ def lin_act_forw(A_prev, W, b, act):
     return A, mem
 
 
+# Full step backwards, combining the dirivative of lin forward step and activation function
+# to get the gradients of per layer
 def lin_act_back(dA, mem, act):
     lin_mem, act_mem = mem
 
@@ -114,6 +121,7 @@ def lin_act_back(dA, mem, act):
     return dA_prev, dW, db
 
 
+# Cost function used in classification problems
 def cross_entropy(Y, Ypr):
     m = Y.shape[1]
 
@@ -125,6 +133,7 @@ def cross_entropy(Y, Ypr):
     return cost
 
 
+# Derivative of cost function to get nn parameter gradients
 def cross_entropy_back(Y, Ypr):
     dY = - (np.divide(Y, Ypr) - np.divide(1 - Y, 1 - Ypr))
 
@@ -133,6 +142,7 @@ def cross_entropy_back(Y, Ypr):
     return dY
 
 
+# Cost function used for regression problems
 def mse(Y, Ypr):
     m = Y.shape[1]
 
@@ -144,6 +154,7 @@ def mse(Y, Ypr):
     return cost
 
 
+# Derivative of cost function used to get nn parameter gradients
 def mse_back(Y, Ypr):
     dY = Ypr - Y
 
@@ -152,6 +163,7 @@ def mse_back(Y, Ypr):
     return dY
 
 
+# L2 regularization on cost function to push weights to lower values for faster gradient descent
 def cost_L2(Y, Ypr, param, lambd, output_type):
     m = Y.shape[1]
 
@@ -175,6 +187,7 @@ def cost_L2(Y, Ypr, param, lambd, output_type):
     return cost
 
 
+# Full combination of function to produce an output for an input/entry
 def model_forw(X, param, output_type):
     mem = []
     A = X
@@ -197,6 +210,8 @@ def model_forw(X, param, output_type):
     return Ypr, mem
 
 
+# Full combination of function to do back propagation, providing the gradients of parameters
+# for a single training example
 def model_back(Y, Ypr, mem, output_type):
     grads = {}
     depth = len(mem)
@@ -232,7 +247,8 @@ def model_back(Y, Ypr, mem, output_type):
     return grads
 
 
-def adam(it, dW, V, S, beta1, beta2, epsilon):
+# Implementation of adam optimisation.
+def adam_update(it, dW, V, S, beta1, beta2, epsilon):
 
     V = beta1 * V + (1 - beta1) * dW
     S = beta2 * S + (1 - beta2) * np.square(dW)
@@ -245,6 +261,8 @@ def adam(it, dW, V, S, beta1, beta2, epsilon):
     return dW, V, S
 
 
+# Function to update nn parameters given gradients and the wanted optimizations.
+# Weighted decay can be activated though by default the system uses L2 regularization.
 def update_param(param, grads, learning_rate, lambd, it,
                  weight_decay=False, adam=True, beta1=0.9, beta2=0.999, epsilon=0.00000001):
 
@@ -257,6 +275,7 @@ def update_param(param, grads, learning_rate, lambd, it,
 
     for i in range(1, depth):
         dW = grads["dW" + str(i)]
+        db = grads["db" + str(i)]
 
         if adam:
             if it == 0:
@@ -266,12 +285,12 @@ def update_param(param, grads, learning_rate, lambd, it,
                 V = param["V" + str(i)]
                 S = param["S" + str(i)]
 
-            dW, V, S = adam(it, dW, V, S, beta1, beta2, epsilon)
+            dW, V, S = adam_update(it, dW, V, S, beta1, beta2, epsilon)
 
             param["V" + str(i)] = V
             param["S" + str(i)] = S
 
         param["W" + str(i)] = param["W" + str(i)] * reg - learning_rate * dW
-        param["b" + str(i)] = param["b" + str(i)] * reg - learning_rate * dW
+        param["b" + str(i)] = param["b" + str(i)] * reg - learning_rate * db
 
     return param
