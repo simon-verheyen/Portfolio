@@ -4,7 +4,8 @@ This repository is made as a showcase of a selection of the projects I have comp
 
 ### gapminder-project:
 
-  This is my latest ongoing project where I use data collected from gapminder.org and use this to practice using, as well as        set up my own, tools for processing, visualising and analysing large datasets.
+  This is my latest ongoing project where I use data collected from gapminder.org and use this to practice using, as well as        set up my own, tools for processing and visualising large datasets.
+  As well as creating my own artifical neural net architecture for training a predictive neural network using gradient descent with multiple reularization and optimization techniques.
 
 ### neural-nets-projects:
 
