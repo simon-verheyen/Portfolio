@@ -167,10 +167,10 @@ def mse_back(Y, Ypr):
 def cost_L2(Y, Ypr, param, lambd, output_type):
     m = Y.shape[1]
 
-    depth = len(param)
+    depth = len(param) // 2
     reg_term = 0
 
-    for i in range(1, depth):
+    for i in range(1, depth + 1):
         W = param["W" + str(i)]
         reg_term += np.sum(np.square(W))
 
@@ -201,6 +201,7 @@ def model_forw(X, param, output_type):
 
     if output_type == 'regression':
         Ypr, temp_mem = lin_act_forw(A, param['W' + str(depth)], param['b' + str(depth)], act='sigmoid')
+        mem.append(temp_mem)
     elif output_type == 'classification':
         Ypr, temp_mem = lin_act_forw(A, param['W' + str(depth)], param['b' + str(depth)], act='relu')
         mem.append(temp_mem)
@@ -263,7 +264,7 @@ def adam_update(it, dW, V, S, beta1, beta2, epsilon):
 
 # Function to update nn parameters given gradients and the wanted optimizations.
 # Weighted decay can be activated though by default the system uses L2 regularization.
-def update_param(param, grads, learning_rate, lambd, it,
+def update_param(param, grads, learning_rate, lambd, it, adam_param,
                  weight_decay=False, adam=True, beta1=0.9, beta2=0.999, epsilon=0.00000001):
 
     depth = len(param) // 2
@@ -273,7 +274,7 @@ def update_param(param, grads, learning_rate, lambd, it,
     else:
         reg = (1 - 2 * lambd)  # L2 opt term
 
-    for i in range(1, depth):
+    for i in range(1, depth + 1):
         dW = grads["dW" + str(i)]
         db = grads["db" + str(i)]
 
@@ -282,15 +283,15 @@ def update_param(param, grads, learning_rate, lambd, it,
                 V = 0
                 S = 0
             else:
-                V = param["V" + str(i)]
-                S = param["S" + str(i)]
+                V = adam_param["V" + str(i)]
+                S = adam_param["S" + str(i)]
 
             dW, V, S = adam_update(it, dW, V, S, beta1, beta2, epsilon)
 
-            param["V" + str(i)] = V
-            param["S" + str(i)] = S
+            adam_param["V" + str(i)] = V
+            adam_param["S" + str(i)] = S
 
         param["W" + str(i)] = param["W" + str(i)] * reg - learning_rate * dW
         param["b" + str(i)] = param["b" + str(i)] * reg - learning_rate * db
 
-    return param
+    return param, adam_param
