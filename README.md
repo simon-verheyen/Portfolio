@@ -13,4 +13,4 @@ This repository is made as a showcase of a selection of the projects I have comp
 
 ### unity-projects:
 
-  This contains small projects and game created in the unity editor, from simulations to small game
+  This contains small projects and game created in the unity editor, from simulations to small game. Used to showcase proficiancy with physics engines as well as C# scripting.
