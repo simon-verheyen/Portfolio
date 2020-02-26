@@ -1,7 +1,7 @@
 import pandas as pd
 
-education = {'primary_school_cost': 'data/education/expenditure_per_student_primary_percent_of_gdp_per_person.csv',
-             'primary_school_completion': 'data/education/primary_completion_rate_total_percent_of_relevant_age_group.csv'}
+education = {'primary_cost': 'data/education/expenditure_per_student_primary_percent_of_gdp_per_person.csv',
+             'primary_completion': 'data/education/primary_completion_rate_total_percent_of_relevant_age_group.csv'}
 
 health = {'sanitation_access': 'data/health/at_least_basic_sanitation_overall_access_percent.csv',
           'water_access': 'data/health/at_least_basic_water_source_overall_access_percent.csv',
@@ -29,9 +29,11 @@ other = {'co2_emissions': 'data/other/co2_emissions_tonnes_per_person.csv',
 data_locations = dict(education, **health, **population, **wealth, **other)
 
 
-def get_country_data(country, attr=[], from_param=1800, to=2018):
+def get_country_data(country, attr=[], from_param=1800, to=2018, keep_empty=True):
     attr = ['Year'] + attr
     structure = [(attr, []) for attr in attr]
+    skip = False
+
     for x in range(from_param, to + 1):
         structure[0][1].append(x)
 
@@ -43,21 +45,28 @@ def get_country_data(country, attr=[], from_param=1800, to=2018):
             return
 
         df = pd.read_csv(path, index_col='country')
-        attr_values = df.loc[country, [str(x) for x in range(from_param, to + 1)]].tolist()
+        df.loc[country].notna().all()
+        if country in df.index and (keep_empty or df.loc[country].notna().all()):
+            attr_values = df.loc[country, [str(x) for x in range(from_param, to + 1)]].tolist()
 
-        for j in range(len(attr_values)):
-            structure[i][1].append(attr_values[j])
+            for j in range(len(attr_values)):
+                structure[i][1].append(attr_values[j])
+
+        else:
+            skip = True
 
     Dict = {title: columns for (title, columns) in structure}
     new_df = pd.DataFrame(Dict).set_index('Year')
 
     new_df.name = country
 
-    return new_df
+    if not skip:
+        return new_df
 
 
 def get_global_data(attr=[], from_param=1800, to=2018):
-    df_pop = pd.read_csv('data/population/population_total.csv', index_col='country')[[str(x) for x in range(from_param, to + 1)]]
+    df_pop = pd.read_csv('data/population/population_total.csv', index_col='country')[
+        [str(x) for x in range(from_param, to + 1)]]
     total_pop_per_year = df_pop.sum(axis=0, skipna=True).tolist()
 
     attr = ['Year'] + attr
@@ -102,8 +111,51 @@ def get_data(countries=[], attr=[], from_param=1800, to=2018):
     return Dict
 
 
-def combine_dict(Dict):
+def get_all_countries():
+    df = pd.read_csv('data/health/life_expectancy_years.csv')
+    countries = df['country'].tolist()
 
+    return countries
+
+
+def get_all_data(attr=[], from_param=1800, to=2018):
+    data = []
+
+    for i in range(len(attr)):
+        path = data_locations.get(attr[i], "wrong")
+
+        if path == "wrong":
+            print("Bad attribute input: " + attr[i])
+            return
+
+        attr_df = pd.read_csv(path, index_col='country')
+        data.append(attr_df)
+
+    attr = ['Year'] + attr
+    structure = [(att, []) for att in attr]
+
+    for country in data[0].index:
+        for column in data[0].columns:
+            ok = True
+            for i in range(len(data)):
+                if country not in data[i].index or data[i].at[country, column] == 0:
+                    ok = False
+
+            if ok:
+                for i in range(1, len(attr)):
+                    structure[i][1].append(data[i - 1].at[country, column])
+
+                structure[0][1].append(int(column))
+
+    Dict = {title: column for (title, column) in structure}
+    new_df = pd.DataFrame(Dict)
+
+    new_df.name = 'all_data_on_attr'
+
+    return new_df
+
+
+def combine_dict(Dict):
     new_df = pd.DataFrame(columns=list(Dict.values())[0].columns)
 
     for entry in Dict:

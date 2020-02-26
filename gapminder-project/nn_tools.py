@@ -146,7 +146,7 @@ def cross_entropy_back(Y, Ypr):
 def mse(Y, Ypr):
     m = Y.shape[1]
 
-    cost = 1 / m * np.sum(np.sqrt(Y - Ypr))
+    cost = 1 / m * np.sum(np.square(Y - Ypr))
 
     cost = np.squeeze(cost)  # [[cost]] -> cost
     assert (cost.shape == ())
@@ -200,10 +200,11 @@ def model_forw(X, param, output_type):
         mem.append(temp_mem)
 
     if output_type == 'regression':
-        Ypr, temp_mem = lin_act_forw(A, param['W' + str(depth)], param['b' + str(depth)], act='sigmoid')
-        mem.append(temp_mem)
-    elif output_type == 'classification':
         Ypr, temp_mem = lin_act_forw(A, param['W' + str(depth)], param['b' + str(depth)], act='relu')
+        mem.append(temp_mem)
+
+    elif output_type == 'classification':
+        Ypr, temp_mem = lin_act_forw(A, param['W' + str(depth)], param['b' + str(depth)], act='sigmoid')
         mem.append(temp_mem)
 
     assert (Ypr.shape == (param['W' + str(depth)].shape[0], X.shape[1]))
@@ -222,16 +223,16 @@ def model_back(Y, Ypr, mem, output_type):
     cur_mem = mem[depth - 1]
 
     if output_type == 'classification':
-        dY = mse_back(Y, Ypr)
-        dA_prev_temp, dW_temp, db_temp = lin_act_back(dY, cur_mem, act="relu")
+        dY = cross_entropy_back(Y, Ypr)
+        dA_prev_temp, dW_temp, db_temp = lin_act_back(dY, cur_mem, act="sigmoid")
 
         grads["dA" + str(depth - 1)] = dA_prev_temp
         grads["dW" + str(depth)] = dW_temp
         grads["db" + str(depth)] = db_temp
 
     elif output_type == 'regression':
-        dY = cross_entropy_back(Y, Ypr)
-        dA_prev_temp, dW_temp, db_temp = lin_act_back(dY, cur_mem, act="sigmoid")
+        dY = mse_back(Y, Ypr)
+        dA_prev_temp, dW_temp, db_temp = lin_act_back(dY, cur_mem, act="relu")
 
         grads["dA" + str(depth - 1)] = dA_prev_temp
         grads["dW" + str(depth)] = dW_temp
