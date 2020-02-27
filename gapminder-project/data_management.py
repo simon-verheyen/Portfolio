@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 education = {'primary_cost': 'data/education/expenditure_per_student_primary_percent_of_gdp_per_person.csv',
              'primary_completion': 'data/education/primary_completion_rate_total_percent_of_relevant_age_group.csv'}
@@ -11,7 +12,7 @@ population = {'child_mortality': 'data/population/child_mortality_0_5_year_olds_
               'ratio_child_and_elderly': 'data/population/children_and_elderly_per_100_adults.csv',
               'children_per_mother': 'data/population/children_per_woman_total_fertility.csv',
               'median_age': 'data/population/median_age_years.csv',
-              'population_density': 'data/population/population_density_per_square_kn.csv',
+              'population_density': 'data/population/population_density_per_square_km.csv',
               'population': 'data/population/population_total.csv'}
 
 wealth = {'av_age_billionaires': 'data/wealth/average_age_of_dollar_billionaires_years.csv',
@@ -83,12 +84,12 @@ def get_global_data(attr=[], from_param=1800, to=2018):
             return
 
         df = pd.read_csv(path, index_col='country')[[str(x) for x in range(from_param, to + 1)]]
-
         df_rel = df * df_pop / total_pop_per_year
         av_values = df_rel.sum(axis=0, skipna=True).tolist()
 
         for val in av_values:
             structure[i][1].append(val)
+
 
     Dict = {title: columns for (title, columns) in structure}
     new_df = pd.DataFrame(Dict).set_index('Year')
@@ -118,6 +119,33 @@ def get_all_countries():
     return countries
 
 
+def get_attr_data(attributes):
+    if len(attributes) == 1:
+        path = data_locations.get(attributes[0], 'wrong')
+        if path == 'wrong':
+            print("Bad attribute input: " + attributes[0])
+            return
+
+        df = pd.read_csv(path, index_col='country')
+
+        return df
+
+    else:
+        Dict = {}
+
+        for i in range(len(attributes)):
+            path = data_locations.get(attributes[i], 'wrong')
+            if path == 'wrong':
+                print("Bad attribute input: " + attributes[i])
+                return
+
+            df = pd.read_csv(path, index_col='country')
+
+            Dict[attributes[i]] = df
+
+        return Dict
+
+
 def get_all_data(attr=[], from_param=1800, to=2018):
     data = []
 
@@ -131,14 +159,14 @@ def get_all_data(attr=[], from_param=1800, to=2018):
         attr_df = pd.read_csv(path, index_col='country')
         data.append(attr_df)
 
-    attr = ['Year'] + attr
+    attr = ['year'] + attr
     structure = [(att, []) for att in attr]
 
     for country in data[0].index:
         for column in data[0].columns:
             ok = True
             for i in range(len(data)):
-                if country not in data[i].index or data[i].at[country, column] == 0:
+                if country not in data[i].index or np.isnan([data[i].at[country, column]]):
                     ok = False
 
             if ok:
