@@ -1,7 +1,8 @@
 import numpy as np
 
-""" Complet the back prop for L2 reg and weighted decay!!! """
-""" Find issue with grad descent, prob in lin back prob or relu back prop"""
+""" Complet the implimentation for L2 reg and weighted decay, use in forw & back prop at same time!!! """
+""" Grad descent inconsistent, sometimes work fine, sometimes has bad gradients"""
+
 
 # Initialize parameters with regularization to combat high weights in deep network for faster gradient descent
 def init_param_he(layer_dims):
@@ -126,23 +127,22 @@ def cost_L2(Y, Ypr, param, lambd, output_type):
 def model_forw(X, param, output_type):
     mem = []
     A = X
-
     depth = len(param) // 2
+
     for i in range(1, depth):
         A_prev = A
         A, temp_mem = lin_act_forw(A_prev, param['W' + str(i)], param['b' + str(i)], act='relu')
-
         mem.append(temp_mem)
 
     if output_type == 'regression':
         Ypr, temp_mem = lin_act_forw(A, param['W' + str(depth)], param['b' + str(depth)], act='linear')
-        mem.append(temp_mem)
 
-    if output_type == 'classification':
+    elif output_type == 'classification':
         Ypr, temp_mem = lin_act_forw(A, param['W' + str(depth)], param['b' + str(depth)], act='sigmoid')
-        mem.append(temp_mem)
 
-    assert (Ypr.shape == (param['W' + str(depth)].shape[0], X.shape[1]))
+    mem.append(temp_mem)
+
+    assert (Ypr.shape == (1, X.shape[1]))
 
     return Ypr, mem
 
@@ -172,7 +172,6 @@ def relu_backprop(dA, mem):
 
 
 def linear_back(dA):
-
     dZ = np.array(dA, copy=True)
 
     assert (dZ.shape == dA.shape)
@@ -183,8 +182,7 @@ def linear_back(dA):
 # Derivative to get the gradients fr the nn parameters
 def back_prop(dZ, mem):
     A_prev, W, b = mem
-
-    m = A_prev.shape[0]
+    m = A_prev.shape[1]
 
     dW = 1. / m * np.dot(dZ, A_prev.T)
     db = 1. / m * np.sum(dZ, axis=1, keepdims=True)
@@ -216,7 +214,7 @@ def lin_act_back(dA, mem, act):
 
 # Derivative of cost function to get nn parameter gradients
 def cross_entropy_back(Y, Ypr):
-    dY = - (np.divide(Y, Ypr) - np.divide(1 - Y, 1 - Ypr))
+    dY = - (np.divide(Y, Ypr) + np.divide(1 - Y, 1 - Ypr))
 
     assert (dY.shape == Y.shape)
 
@@ -225,7 +223,7 @@ def cross_entropy_back(Y, Ypr):
 
 # Derivative of cost function used to get nn parameter gradients
 def mse_back(Y, Ypr):
-    dY = Ypr - Y
+    dY = 2 * (Ypr - Y)
 
     assert (dY.shape == Y.shape)
 
@@ -240,9 +238,9 @@ def cost_weighted_back(Y, Ypr, param, lambd, output_type):
 
     for i in range(1, depth + 1):
         W = param["W" + str(i)]
-        reg_term += np.sum(W)
+        reg_term += np.sum(np.square(W))
 
-    L2_regularization_cost = lambd / (m) * reg_term
+    L2_regularization_cost = lambd / m * reg_term
 
     if output_type == 'regression':
         loss = mse_back(Y, Ypr)
@@ -288,53 +286,68 @@ def model_back(Y, Ypr, mem, output_type):
     return grads
 
 
+def initialize_adam(param):
+    depth = len(param) // 2
+    V = {}
+    S = {}
+
+    for i in range(1, depth + 1):
+        V["dW" + str(i)] = np.zeros(param["W" + str(i)].shape)
+        V["db" + str(i)] = np.zeros(param["b" + str(i)].shape)
+
+        S["dW" + str(i)] = np.zeros(param["W" + str(i)].shape)
+        S["db" + str(i)] = np.zeros(param["b" + str(i)].shape)
+
+    return V, S
+
+
 # Implementation of adam optimisation.
-def adam_update(it, dW, V, S, beta1, beta2, epsilon):
+def update_adam(param, grads, V, S, it, learning_rate, lambd, L2, beta1=0.9, beta2=0.999, epsilon=1e-8):
+    depth = len(param) // 2
+    V_corr = {}
+    S_corr = {}
+    reg = 1
 
-    V = beta1 * V + (1 - beta1) * dW
-    S = beta2 * S + (1 - beta2) * np.square(dW)
+    if L2:
+        reg = (1 - 2 * lambd)
 
-    V_corr = V / np.power(1 - beta1, it)
-    S_corr = S / np.power(1 - beta2, it)
+    for i in range(depth):
+        V["dW" + str(i + 1)] = beta1 * V["dW" + str(i + 1)] + (1 - beta1) * grads['dW' + str(i + 1)]
+        V["db" + str(i + 1)] = beta1 * V["db" + str(i + 1)] + (1 - beta1) * grads['db' + str(i + 1)]
 
-    dW = V_corr / np.sqrt(S_corr + epsilon)
+        V_corr["dW" + str(i + 1)] = V["dW" + str(i + 1)] / (1 - np.power(beta1, it))
+        V_corr["db" + str(i + 1)] = V["db" + str(i + 1)] / (1 - np.power(beta1, it))
 
-    return dW, V, S
+        S["dW" + str(i + 1)] = beta2 * S["dW" + str(i + 1)] + (1 - beta2) * np.power(grads['dW' + str(i + 1)], 2)
+        S["db" + str(i + 1)] = beta2 * S["db" + str(i + 1)] + (1 - beta2) * np.power(grads['db' + str(i + 1)], 2)
+
+        S_corr["dW" + str(i + 1)] = S["dW" + str(i + 1)] / (1 - np.power(beta2, it))
+        S_corr["db" + str(i + 1)] = S["db" + str(i + 1)] / (1 - np.power(beta2, it))
+
+        param["W" + str(i + 1)] = param["W" + str(i + 1)] * reg - learning_rate * V_corr["dW" + str(i + 1)] / (
+                    np.sqrt(S_corr["dW" + str(i + 1)]) + epsilon)
+        param["b" + str(i + 1)] = param["b" + str(i + 1)] * reg - learning_rate * V_corr["db" + str(i + 1)] / (
+                    np.sqrt(S_corr["db" + str(i + 1)]) + epsilon)
+
+    return param, V, S
 
 
 # Function to update nn parameters given gradients and the wanted optimizations.
 # Weighted decay can be activated though by default the system uses L2 regularization.
-def update_param(param, grads, learning_rate, lambd, it, adam_param,
-                 weight_decay=False, adam=True, beta1=0.9, beta2=0.999, epsilon=0.00000001):
-
+def update_gd(param, grads, learning_rate, lambd, L2=True):
     depth = len(param) // 2
+    reg = 1
 
-    if not weight_decay:
-        reg = (1 - lambd)  # weight decay opt term
-    else:
+    if L2:
         reg = (1 - 2 * lambd)  # L2 opt term
+    #elif weight_decay:
+    #    reg = (1 - lambd)  # weight decay opt term
 
     for i in range(1, depth + 1):
-        dW = grads["dW" + str(i)]
-        db = grads["db" + str(i)]
+        param["W" + str(i)] = param["W" + str(i)] * reg - learning_rate * grads["dW" + str(i)]
+        param["b" + str(i)] = param["b" + str(i)] * reg - learning_rate * grads["db" + str(i)]
 
-        if adam:
-            if it == 0:
-                V = 0
-                S = 0
-            else:
-                V = adam_param["V" + str(i)]
-                S = adam_param["S" + str(i)]
-
-            dW, V, S = adam_update(it, dW, V, S, beta1, beta2, epsilon)
-
-            adam_param["V" + str(i)] = V
-            adam_param["S" + str(i)] = S
-
-        param["W" + str(i)] = param["W" + str(i)] * reg - learning_rate * dW
-        param["b" + str(i)] = param["b" + str(i)] * reg - learning_rate * db
-
-    return param, adam_param
+    return param
 
 
 def grad_checking(layers, nn_param, grads, X, Y, epsilon=1e-7):
@@ -361,16 +374,15 @@ def grad_checking(layers, nn_param, grads, X, Y, epsilon=1e-7):
 
         gradapprox[i] = (J_plus[i] - J_minus[i]) / (2 * epsilon)
 
-    num = np.linalg.norm(gradapprox - grad_val)
-    den = np.linalg.norm(gradapprox) + np.linalg.norm(grad_val)
+    num = np.linalg.norm(grad_val - gradapprox)
+    den = np.linalg.norm(grad_val) + np.linalg.norm(gradapprox)
 
     diff = num / den
-
     if diff > epsilon:
-        print(f"Bad gradients, diff = {diff}")
+        print(f"Bad gradients")
     else:
         print("Good gradients")
-
+    print(f"diff: {diff}")
     return diff
 
 

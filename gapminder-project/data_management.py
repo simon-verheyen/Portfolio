@@ -159,7 +159,7 @@ def get_all_data(attr=[], from_param=1800, to=2018):
         attr_df = pd.read_csv(path, index_col='country')
         data.append(attr_df)
 
-    attr = ['year'] + attr
+    attr = ['year', 'country'] + attr
     structure = [(att, []) for att in attr]
 
     for country in data[0].index:
@@ -170,13 +170,14 @@ def get_all_data(attr=[], from_param=1800, to=2018):
                     ok = False
 
             if ok:
-                for i in range(1, len(attr)):
-                    structure[i][1].append(data[i - 1].at[country, column])
+                for i in range(2, len(attr)):
+                    structure[i][1].append(data[i - 2].at[country, column])
 
                 structure[0][1].append(int(column))
+                structure[1][1].append(country)
 
     Dict = {title: column for (title, column) in structure}
-    new_df = pd.DataFrame(Dict)
+    new_df = pd.DataFrame(Dict).set_index('country')
 
     new_df.name = 'all_data_on_attr'
 
