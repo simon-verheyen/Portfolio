@@ -4,4 +4,5 @@ def test_answer():
     b = 1
     assert a == b  # to see what was printed
 
+
 test_answer()
