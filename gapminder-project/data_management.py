@@ -90,7 +90,6 @@ def get_global_data(attr=[], from_param=1800, to=2018):
         for val in av_values:
             structure[i][1].append(val)
 
-
     Dict = {title: columns for (title, columns) in structure}
     new_df = pd.DataFrame(Dict).set_index('Year')
 
