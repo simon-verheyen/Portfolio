@@ -1,6 +1,7 @@
 # Portfolio: Simon Verheyen
 
 This repository is made as a showcase of a selection of the projects I have completed over the year.
+My resume can be found in this repository as well.
 
 ### gapminder-project:
 
