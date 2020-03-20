@@ -1,6 +1,6 @@
 # Portfolio: Simon Verheyen
 
-This repository is made as a showcase of a selection of the projects I have completed over the year.
+This repository is made as a showcase of a selection of the projects I have completed over the last year.
 
 ### gapminder-project:
 
