@@ -6,7 +6,6 @@ import datetime
 
 def plot_big(df, legend=True):
     plt.figure(figsize=(15, 10))
-    plt.suptitle(title)
 
     for col in df:
         plt.plot(df.index, df[col], label=col)
