@@ -3,9 +3,9 @@ import numpy as np
 
 
 # This script combines all the tools from nn_tools.py to train a neural network and get predictions
-def train_network(layer_dims, data, Y, iterations, optimizer, learning_rate=0.01, lambd=0.001, problem_type='regression',
+def train_network(layer_dims, data, Y, iterations, optimizer, learning_rate=0.01, lambd=0.001,
+                  problem_type='regression',
                   beta1=0.9, beta2=0.999, epsilon=1e-8, L2=True):
-
     param = nn_tools.init_param_he(layer_dims)
 
     if optimizer == 'adam':
@@ -27,7 +27,8 @@ def train_network(layer_dims, data, Y, iterations, optimizer, learning_rate=0.01
             grads = nn_tools.model_back(Y[j], Ypr, mem, problem_type)
 
             if optimizer == 'adam':
-                param, V, S = nn_tools.update_adam(param, grads, V, S, i, learning_rate, L2, lambd, beta1, beta2, epsilon)
+                param, V, S = nn_tools.update_adam(param, grads, V, S, i, learning_rate, L2, lambd, beta1, beta2,
+                                                   epsilon)
             elif optimizer == 'gd':
                 param = nn_tools.update_gd(param, grads, learning_rate, lambd, L2)
 
@@ -59,6 +60,7 @@ def predict(param, data, output_type='regression'):
 
 def check_grads(layers_dim, data, Y, problem_type='regression'):
     param = nn_tools.init_param_he(layers_dim)
+
     Y = np.array(Y).reshape(-1, 1)
 
     for i in range(len(Y)):
@@ -67,4 +69,3 @@ def check_grads(layers_dim, data, Y, problem_type='regression'):
 
         grads = nn_tools.model_back(Y[i], Ypr, mem, problem_type)
         nn_tools.grad_checking(layers_dim, param, grads, X, Y[i])
-

@@ -325,9 +325,9 @@ def update_adam(param, grads, V, S, it, learning_rate, lambd, L2, beta1=0.9, bet
         S_corr["db" + str(i + 1)] = S["db" + str(i + 1)] / (1 - np.power(beta2, it))
 
         param["W" + str(i + 1)] = param["W" + str(i + 1)] * reg - learning_rate * V_corr["dW" + str(i + 1)] / (
-                    np.sqrt(S_corr["dW" + str(i + 1)]) + epsilon)
+                np.sqrt(S_corr["dW" + str(i + 1)]) + epsilon)
         param["b" + str(i + 1)] = param["b" + str(i + 1)] * reg - learning_rate * V_corr["db" + str(i + 1)] / (
-                    np.sqrt(S_corr["db" + str(i + 1)]) + epsilon)
+                np.sqrt(S_corr["db" + str(i + 1)]) + epsilon)
 
     return param, V, S
 
@@ -340,7 +340,7 @@ def update_gd(param, grads, learning_rate, lambd, L2=True):
 
     if L2:
         reg = (1 - 2 * lambd)  # L2 opt term
-    #elif weight_decay:
+    # elif weight_decay:
     #    reg = (1 - lambd)  # weight decay opt term
 
     for i in range(1, depth + 1):

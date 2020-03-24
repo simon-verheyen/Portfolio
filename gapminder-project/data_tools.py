@@ -248,7 +248,7 @@ def plot_heatmap(df, size=(11, 9)):
         im, cbar = heatmap(corr, df.columns, df.columns, ax=ax, cmap="RdPu", cbarlabel=df.name)
     else:
         im, cbar = heatmap(corr, df.columns, df.columns, ax=ax, cmap="RdPu")
-    texts = annotate_heatmap(im)
+    _ = annotate_heatmap(im)
 
     fig.tight_layout()
     plt.show()
