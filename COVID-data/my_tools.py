@@ -1,119 +1,96 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib.dates as mdates
+import pandas as pd
 import datetime
 
 
-def plot_big(df, legend=True):
-    plt.figure(figsize=(15, 10))
+df_cases_new = pd.read_csv('data/cases_new.csv').set_index('Date')
+df_cases_new.name= 'New cases'
+df_cases_total = pd.read_csv('data/cases_total.csv').set_index('Date')
+df_cases_total.name = 'Total cases'
+df_cases_relative = pd.read_csv('data/cases_relative.csv').set_index('Date')
+df_cases_relative.name = 'Cases over population size'
 
-    for col in df:
-        plt.plot(df.index, df[col], label=col)
-    plt.title(df.name)
+df_deaths_new = pd.read_csv('data/deaths_new.csv').set_index('Date')
+df_deaths_new.name = 'New deaths'
+df_deaths_total = pd.read_csv('data/deaths_total.csv').set_index('Date')
+df_deaths_total.name = 'Total deaths'
+df_deaths_relative = pd.read_csv('data/deaths_relative.csv').set_index('Date')
+df_deaths_relative.name = 'Deaths over cases'
+
+
+def read_csv(name):
+    df = pd.read_csv('data/' + name + '.csv')
+    df['Date'] = df['Date'].astype('datetime64[ns]') 
+    df = df.set_index('Date')
+    df.name = name
     
-    if legend:
-        plt.legend()
-    plt.show()
+    return df
 
-
-def plot_small(df,  title=''):
-    plt.figure(figsize=(15, 5))
-    plt.suptitle(title)
-
-    for col in df:
-        plt.plot(df.index, df[col], label=col)
-    plt.title(df.name)
-    plt.legend()
-    plt.show()
-
-
-def plot_side_by_side(df1, df2, title=''):
-    plt.figure(figsize=(15, 5))
-    plt.suptitle(title)
-
-    plt.subplot(121)
+def worst_in_cat(date, category):
+    if type(date) == str:
+        date = datetime.datetime.strptime(date, '%Y-%m-%d')
     
-    dates1 = df1.index.tolist()
-    ax = plt.gca()
-
-    formatter = mdates.DateFormatter("%Y-%m-%d")
-    ax.xaxis.set_major_formatter(formatter)
-
-    locator = mdates.DayLocator()
-    ax.xaxis.set_major_locator(locator)
+    start_date = str(date - datetime.timedelta(days=14))
+    end_date = str(date)
     
-    for col in df1:
-        plt.plot(dates1, df1[col], label=col)
-    plt.title(df1.name)
-
-    plt.subplot(122)
+    if category == 'cases_new':
+        df = df_cases_new
+    elif category == 'cases_total':
+        df = df_cases_total     
+    elif category == 'cases_relative':
+        df = df_cases_relative
+        
+    elif category == 'deaths_new':
+        df = df_deaths_new 
+    elif category == 'deaths_total':
+        df = df_deaths_total  
+    elif category == 'deaths_relative':
+        df = df_deaths_relative
+        
+    df = df.loc[start_date:end_date]
+    df = df.sum(axis=0)
+    df = df.nlargest(10)
+    most = df.index
     
-    dates2 = df2.index.tolist()
-    ax = plt.gca()
+    return most
 
-    formatter = mdates.DateFormatter("%Y-%m-%d")
-    ax.xaxis.set_major_formatter(formatter)
 
-    locator = mdates.DayLocator()
-    ax.xaxis.set_major_locator(locator)
+def plot_df(df, leg=False, size=(15,9), title=''):
+    df.plot(figsize=size, legend=leg)
     
-    for col in df2:
-        plt.plot(dates2, df2[col], label=col)
-    plt.title(df2.name)
-    plt.show()
-
-
-def convert_datetime_to_x(df):
-    dates = df.values.tolist()
-
-
-
-def normalize(data):
-    if type(data) is dict:
-        norm_dict = {}
-        all_cache = {}
-        for entry in data:
-            df_norm, cache = normalize(data[entry])
-            norm_dict[entry] = df_norm
-            all_cache[entry] = cache
-
-        return norm_dict, all_cache
-
+    if title != '':
+        plt.title(title)
     else:
-        averages = np.sum(data) / len(data)
-        stand_div = np.std(data, axis=0)
-
-        new_df = (data - averages) / stand_div
-        new_df.name = data.name
-
-        cache = (averages, stand_div)
-
-        return new_df, cache
-
-
-def denormalize(data, cache):
-    if type(data) is dict:
-        Dict = {}
-        for entry in data:
-            df = denormalize(data[entry], cache[entry])
-            Dict[entry] = df
-
-        return Dict
-
+        plt.title(df.name)
+    plt.show()
+    
+def plot_side_by_side(df1, df2, countries=[], leg=True):
+    fig, (ax1, ax2) = plt.subplots(ncols=2)
+    
+    if leg:
+        if not countries:
+            df1.plot(figsize=(17,6), ax=ax1)
+            df2.plot(figsize=(17,6), ax=ax2)
+        else:
+            df1[countries].plot(figsize=(17,6), ax=ax1)
+            df2[countries].plot(figsize=(17,6), ax=ax2)
+        
+        ax1.legend(frameon=False, loc='upper left')
+        ax2.legend(frameon=False, loc='upper left')
+     
     else:
-        average = cache[0]
-        stand_div = cache[1]
-
-        new_df = data * stand_div + average
-        new_df.name = data.name
-
-        return new_df
-
-
-def get_random_val_set(df):
-    selection_mask = np.random.rand(len(df)) < 0.8
-
-    train_set = df[selection_mask]
-    validation_set = df[~selection_mask]
-
-    return train_set, validation_set
+        if not countries:
+            df1.plot(figsize=(17,6), ax=ax1, legend=False)
+            df2.plot(figsize=(17,6), ax=ax2, legend=False)
+        else:
+            df1[countries].plot(figsize=(17,6), ax=ax1, legend=False)
+            df2[countries].plot(figsize=(17,6), ax=ax2, legend=False)
+    
+    ax1.set_xlabel('')
+    ax1.set_title(df1.name)
+  
+    ax2.set_xlabel('')
+    ax2.set_title(df2.name)
+    
+    plt.show()
