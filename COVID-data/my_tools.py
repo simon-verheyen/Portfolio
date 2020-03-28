@@ -19,11 +19,11 @@ df_deaths_relative = pd.read_csv('data/deaths_relative.csv').set_index('Date')
 df_deaths_relative.name = 'Deaths over cases'
 
 
-def read_csv(name):
+def read_csv(name, title):
     df = pd.read_csv('data/' + name + '.csv')
     df['Date'] = df['Date'].astype('datetime64[ns]') 
     df = df.set_index('Date')
-    df.name = name
+    df.name = title
     
     return df
 
@@ -67,29 +67,33 @@ def plot_df(df, leg=False, size=(15,9), title='', scale='linear'):
     plt.yscale(scale)
     plt.show()
     
-def plot_side_by_side(df1, df2, countries=[], leg=True, scale='linear', title=''):
+def plot_side_by_side(df1, df2, countries=[], leg=True, scale='linear', title='', days=0):
+    if days == 0:
+        days = len(df1)
+    
+    
     fig, (ax1, ax2) = plt.subplots(ncols=2)
     if title:
         fig.suptitle(title)
     
     if leg:
         if not countries:
-            df1.plot(figsize=(17,6), ax=ax1)
-            df2.plot(figsize=(17,6), ax=ax2)
+            df1.tail(days).plot(figsize=(17,6), ax=ax1)
+            df2.tail(days).plot(figsize=(17,6), ax=ax2)
         else:
-            df1[countries].plot(figsize=(17,6), ax=ax1)
-            df2[countries].plot(figsize=(17,6), ax=ax2)
+            df1[countries].tail(days).plot(figsize=(17,6), ax=ax1)
+            df2[countries].tail(days).plot(figsize=(17,6), ax=ax2)
         
         ax1.legend(frameon=False, loc='upper left')
         ax2.legend(frameon=False, loc='upper left')
      
     else:
         if not countries:
-            df1.plot(figsize=(17,6), ax=ax1, legend=False)
-            df2.plot(figsize=(17,6), ax=ax2, legend=False)
+            df1.tail(days).plot(figsize=(17,6), ax=ax1, legend=False)
+            df2.tail(days).plot(figsize=(17,6), ax=ax2, legend=False)
         else:
-            df1[countries].plot(figsize=(17,6), ax=ax1, legend=False)
-            df2[countries].plot(figsize=(17,6), ax=ax2, legend=False)
+            df1.tail(days)[countries].plot(figsize=(17,6), ax=ax1, legend=False)
+            df2.tail(days)[countries].plot(figsize=(17,6), ax=ax2, legend=False)
     
     ax1.set_xlabel('')
     ax1.set_yscale(scale)
@@ -100,3 +104,12 @@ def plot_side_by_side(df1, df2, countries=[], leg=True, scale='linear', title=''
     ax2.set_title(df2.name)
     
     plt.show()
+    
+def show_everything(country_list, amount_days, header):
+    plot_side_by_side(df_cases_new, df_deaths_new, title=header, countries=country_list, days=amount_days)
+
+    plot_side_by_side(df_cases_total, df_deaths_total, title='Linear scale', countries=country_list, days=amount_days)
+    plot_side_by_side(df_cases_total, df_deaths_total, title='Logaritmic scale', scale='log', countries=country_list, days=amount_days)
+
+    plot_side_by_side(df_cases_relative, df_deaths_relative, title='Linear scale', countries=country_list, days=amount_days)
+    plot_side_by_side(df_cases_relative, df_deaths_relative, title='Logaritmic scale', scale='log', countries=country_list, days=amount_days)
