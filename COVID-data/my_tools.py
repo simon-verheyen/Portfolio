@@ -56,17 +56,21 @@ def worst_in_cat(date, category):
     return most
 
 
-def plot_df(df, leg=False, size=(15,9), title=''):
+def plot_df(df, leg=False, size=(15,9), title='', scale='linear'):
     df.plot(figsize=size, legend=leg)
     
     if title != '':
         plt.title(title)
     else:
         plt.title(df.name)
+            
+    plt.yscale(scale)
     plt.show()
     
-def plot_side_by_side(df1, df2, countries=[], leg=True):
+def plot_side_by_side(df1, df2, countries=[], leg=True, scale='linear', title=''):
     fig, (ax1, ax2) = plt.subplots(ncols=2)
+    if title:
+        fig.suptitle(title)
     
     if leg:
         if not countries:
@@ -88,9 +92,11 @@ def plot_side_by_side(df1, df2, countries=[], leg=True):
             df2[countries].plot(figsize=(17,6), ax=ax2, legend=False)
     
     ax1.set_xlabel('')
+    ax1.set_yscale(scale)
     ax1.set_title(df1.name)
   
     ax2.set_xlabel('')
+    ax2.set_yscale(scale)
     ax2.set_title(df2.name)
     
     plt.show()
