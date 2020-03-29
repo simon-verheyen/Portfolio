@@ -114,20 +114,29 @@ def show_everything(country_list, amount_days, header):
     plot_side_by_side(df_cases_relative, df_deaths_relative, title='Logaritmic scale', scale='log', countries=country_list, days=amount_days)
     
 def show_table(countries):
-    info_new = []
-    info_total = []
-    info_relative = []
-    
-    d = {}
+    ind = [[],[]]
+    struct_data = [('New', []), ('Total', []), ('Relative', [])]
     
     for country in countries:
-        info_new.append([country, df_cases_new[country].values[-1], df_deaths_new[country].values[-1]])
-        info_total.append([country, df_cases_total[country].values[-1], df_deaths_total[country].values[-1]])
-        info_relative.append([country, df_cases_relative[country].values[-1], df_deaths_relative[country].values[-1]])
+        ind[0].append(country)
+        ind[0].append(country)
         
-    d['New'] = pd.DataFrame(columns=['ind', 'Cases', 'Deaths'], data=info_new).set_index('ind')
-    d['Total'] = pd.DataFrame(columns=['ind', 'Cases', 'Deaths'], data=info_total).set_index('ind')
-    d['Relative'] = pd.DataFrame(columns=['ind', 'Cases', 'Deaths'], data=info_relative).set_index('ind')
+        ind[1].append('Cases')
+        ind[1].append('Deaths')
+        
+        struct_data[0][1].append(df_cases_new[country].values[-1])
+        struct_data[0][1].append(df_deaths_new[country].values[-1])
+        
+        struct_data[1][1].append(df_cases_total[country].values[-1])
+        struct_data[1][1].append(df_deaths_total[country].values[-1])
+        
+        cases_perc = f'{df_cases_relative[country].values[-1] * 100 : 9.2f}%'
+        deaths_perc = f'{df_deaths_relative[country].values[-1] * 100 : 9.2f}%'
+        
+        struct_data[2][1].append(cases_perc)
+        struct_data[2][1].append(deaths_perc)
     
-    df = pd.concat(d, axis=1)
-    return df
+    d = {title: content for (title, content) in struct_data}
+    df = pd.DataFrame(d, index=ind)
+        
+    display(df.style)
