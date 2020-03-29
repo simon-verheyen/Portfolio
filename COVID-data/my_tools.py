@@ -71,7 +71,6 @@ def plot_side_by_side(df1, df2, countries=[], leg=True, scale='linear', title=''
     if days == 0:
         days = len(df1)
     
-    
     fig, (ax1, ax2) = plt.subplots(ncols=2)
     if title:
         fig.suptitle(title)
@@ -113,3 +112,22 @@ def show_everything(country_list, amount_days, header):
 
     plot_side_by_side(df_cases_relative, df_deaths_relative, title='Linear scale', countries=country_list, days=amount_days)
     plot_side_by_side(df_cases_relative, df_deaths_relative, title='Logaritmic scale', scale='log', countries=country_list, days=amount_days)
+    
+def show_table(countries):
+    info_new = []
+    info_total = []
+    info_relative = []
+    
+    d = {}
+    
+    for country in countries:
+        info_new.append([country, df_cases_new[country].values[-1], df_deaths_new[country].values[-1]])
+        info_total.append([country, df_cases_total[country].values[-1], df_deaths_total[country].values[-1]])
+        info_relative.append([country, df_cases_relative[country].values[-1], df_deaths_relative[country].values[-1]])
+        
+    d['New'] = pd.DataFrame(columns=['ind', 'Cases', 'Deaths'], data=info_new).set_index('ind')
+    d['Total'] = pd.DataFrame(columns=['ind', 'Cases', 'Deaths'], data=info_total).set_index('ind')
+    d['Relative'] = pd.DataFrame(columns=['ind', 'Cases', 'Deaths'], data=info_relative).set_index('ind')
+    
+    df = pd.concat(d, axis=1)
+    return df
