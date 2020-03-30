@@ -4,28 +4,6 @@ import pandas as pd
 import datetime
 
 
-df_cases_new = pd.read_csv('data/cases_new.csv').set_index('Date')
-df_cases_new.name= 'New cases'
-df_cases_total = pd.read_csv('data/cases_total.csv').set_index('Date')
-df_cases_total.name = 'Total cases'
-df_cases_relative = pd.read_csv('data/cases_relative.csv').set_index('Date')
-df_cases_relative.name = 'Cases over population size'
-df_cases_weekly = pd.read_csv('data/cases_weekly.csv').set_index('Date')
-df_cases_weekly.name = 'New cases weekly'
-
-df_deaths_new = pd.read_csv('data/deaths_new.csv').set_index('Date')
-df_deaths_new.name = 'New deaths'
-df_deaths_total = pd.read_csv('data/deaths_total.csv').set_index('Date')
-df_deaths_total.name = 'Total deaths'
-df_deaths_relative = pd.read_csv('data/deaths_relative.csv').set_index('Date')
-df_deaths_relative.name = 'Deaths over cases'
-df_deaths_weekly = pd.read_csv('data/deaths_weekly.csv').set_index('Date')
-df_deaths_weekly.name = 'New deaths weekly'
-
-df_thresholds = pd.read_csv('data/threshold_dates.csv').set_index('ind')
-df_thresholds.name = 'Threshold dates'
-
-
 def read_csv(name, title):
     df = pd.read_csv('data/' + name + '.csv')
     df['Date'] = df['Date'].astype('datetime64[ns]') 
@@ -34,11 +12,29 @@ def read_csv(name, title):
     
     return df
 
+
+df_cases_new = read_csv('cases_new', 'New cases')
+df_cases_total = read_csv('cases_total','Total cases')
+df_cases_relative = read_csv('cases_relative', 'Cases over population size')
+df_cases_weekly = read_csv('cases_weekly', 'New cases weekly')
+
+df_cases_threshold = pd.read_csv('data/cases_threshold.csv')
+df_cases_threshold.name = 'Total cases after threshold'
+
+df_deaths_new = read_csv('deaths_new', 'New deaths')
+df_deaths_total = read_csv('deaths_total', 'Total deaths')
+df_deaths_relative = read_csv('deaths_relative', 'Deaths over cases')
+df_deaths_weekly = read_csv('deaths_weekly', 'New deaths weekly')
+
+df_deaths_threshold = pd.read_csv('data/deaths_threshold.csv')
+df_deaths_threshold.name = 'Total deaths after threshold'
+
+
 def worst_in_cat(date, category):
     if type(date) == str:
         date = datetime.datetime.strptime(date, '%Y-%m-%d')
     
-    start_date = str(date - datetime.timedelta(days=14))
+    start_date = str(date - datetime.timedelta(days=7))
     end_date = str(date)
     
     if category == 'cases_new':
@@ -61,18 +57,6 @@ def worst_in_cat(date, category):
     most = df.index
     
     return most
-
-
-def plot_df(df, leg=False, size=(15,9), title='', scale='linear'):
-    df.plot(figsize=size, legend=leg)
-    
-    if title != '':
-        plt.title(title)
-    else:
-        plt.title(df.name)
-            
-    plt.yscale(scale)
-    plt.show()
     
 def plot_side_by_side(df1, df2, countries=[], leg=True, scale='linear', title='', days=0, location='upper left'):
     if days == 0:
@@ -110,20 +94,89 @@ def plot_side_by_side(df1, df2, countries=[], leg=True, scale='linear', title=''
     ax2.set_title(df2.name)
     
     plt.show()
-    
-def show_everything(country_list, amount_days, header):
-    plot_side_by_side(df_cases_new, df_deaths_new, title=header, countries=country_list, days=amount_days)
 
-    plot_side_by_side(df_cases_total, df_deaths_total, title='Linear scale', countries=country_list, days=amount_days)
-    plot_side_by_side(df_cases_total, df_deaths_total, title='Logaritmic scale', scale='log', countries=country_list, days=amount_days)
-
-    plot_side_by_side(df_cases_relative, df_deaths_relative, title='Linear scale', countries=country_list, days=amount_days)
-    plot_side_by_side(df_cases_relative, df_deaths_relative, title='Logaritmic scale', scale='log', countries=country_list, days=amount_days)
+def plot_new(countries=[], days=0):
+    sizes = (17, 4)
     
-    df_cases_threshold = data_from_threshold(df_cases_total, country_list,'cases')
-    df_deaths_threshold = data_from_threshold(df_deaths_total, country_list, 'deaths')
-                                              
-    plot_side_by_side(df_cases_threshold, df_deaths_threshold, title='Logaritmic scale + Normalized translation', scale='log', countries=country_list, location='lower right')
+    if days == 0:
+        days = len(df_cases_new)
+    
+    fig, (ax1, ax2) = plt.subplots(ncols=2)
+    fig.suptitle('NEW')
+    
+    if countries:
+        df_cases_new[countries].tail(days).plot(figsize=sizes, ax=ax1)
+        df_deaths_new[countries].tail(days).plot(figsize=sizes, ax=ax2, legend=False)
+    else: 
+        df_cases_new.tail(days).plot(figsize=sizes, ax=ax1)
+        df_deaths_new.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
+    
+    ax1.legend(frameon=False, loc='upper left')
+    ax1.set_title('Cases')
+    ax2.set_title('Deaths')
+
+    plt.show()
+    
+def plot_3(subject, countries=[], days=0, location='upper left'):
+    sizes = (17, 4)
+    if days == 0:
+        days = len(df_cases_new)
+    
+    if subject == 'cases':
+        name = 'TOTAL CASES'
+        df1 = df_cases_total
+        df2 = df_cases_threshold
+    
+    if subject == 'deaths':
+        name = 'TOTAL DEATHS'
+        df1 = df_deaths_total
+        df2 = df_deaths_threshold
+    
+    fig, (ax1, ax2, ax3) = plt.subplots(ncols=3)
+    fig.suptitle(name)
+        
+    if not countries:
+        df1.tail(days).plot(figsize=sizes, ax=ax1, legend=False)
+        df1.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
+        df2.plot(figsize=sizes, ax=ax3, legend=False)
+    else:
+        df1[countries].tail(days).plot(figsize=sizes, ax=ax1, legend=False)
+        df1[countries].tail(days).plot(figsize=sizes, ax=ax2, legend=False)
+        df2[countries].plot(figsize=sizes, ax=ax3, legend=False)
+    
+    ax3.legend(frameon=False, loc='lower right')
+    
+    ax1.set_xlabel('')
+    ax1.set_title('linear')
+  
+    ax2.set_xlabel('')
+    ax2.set_yscale('log')
+    ax2.set_title('logarithmic')
+    
+    ax3.set_xlabel('')
+    ax3.set_yscale('log')
+    ax3.set_title('logarithmic, from threshold')
+    
+    plt.show()
+        
+def plot_trends(countries):
+    plt.figure(figsize=(17,6))
+    for country in countries:
+        x = df_cases_total.loc[df_cases_weekly.index, country].tolist()
+        y = df_cases_weekly[country].tolist()
+
+        plt.plot(x, y, label=country) 
+
+    plt.xlabel('total cases')
+    plt.xscale('log')
+    plt.xlim(xmin=100)
+    
+    plt.ylabel('weekly new cases') 
+    plt.yscale('log')
+    
+    plt.legend(loc='upper left', frameon=False)
+    plt.title('show trend')
+    plt.show()
     
 def show_table(countries):
     ind = [[],[]]
@@ -153,44 +206,9 @@ def show_table(countries):
         
     display(df.style)
     
-def data_from_threshold(df, countries, category):
-    d = {}
-    
-    if category == 'cases':
-        start_dates = df_thresholds.iloc[0]
-    else:
-        start_dates = df_thresholds.iloc[1]
-    
-    for country in countries:
-        if country in start_dates.index:
-            date = start_dates[country]
-            d[country] = df.loc[df.index >= date][country].reset_index(drop=True)
-        
-    df = pd.DataFrame(d)
-    df.dropna(axis=0, how='all', subset=None, inplace=True)
-    
-    if category == 'cases':
-        df.name = 'Cases after first 100'
-    else: 
-        df.name = 'Deaths after first 10'
-    
-    return df
-
-def plot_trends(countries):
-    plt.figure(figsize=(17,9))
-    for country in countries:
-        x = df_cases_total.loc[df_cases_weekly.index, country].tolist()
-        y = df_cases_weekly[country].tolist()
-
-        plt.plot(x, y, label=country) 
-
-    plt.xlabel('total cases')
-    plt.xscale('log')
-    plt.xlim(xmin=100)
-    
-    plt.ylabel('weekly new cases') 
-    plt.yscale('log')
-    
-    plt.legend(loc='upper left')
-    plt.title('show trend')
-    plt.show()
+def show_everything(country_list, amount_days):
+    plot_new(country_list, days=amount_days)
+    plot_3('cases', countries=country_list, days=amount_days)
+    plot_3('deaths', countries=country_list, days=amount_days)
+    plot_trends(country_list)
+    show_table(country_list)
