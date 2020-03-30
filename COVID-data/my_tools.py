@@ -18,6 +18,9 @@ df_deaths_total.name = 'Total deaths'
 df_deaths_relative = pd.read_csv('data/deaths_relative.csv').set_index('Date')
 df_deaths_relative.name = 'Deaths over cases'
 
+df_thresholds = pd.read_csv('data/thresholds.csv').set_index('ind')
+df_thresholds.name = 'Threshold dates'
+
 
 def read_csv(name, title):
     df = pd.read_csv('data/' + name + '.csv')
@@ -67,7 +70,7 @@ def plot_df(df, leg=False, size=(15,9), title='', scale='linear'):
     plt.yscale(scale)
     plt.show()
     
-def plot_side_by_side(df1, df2, countries=[], leg=True, scale='linear', title='', days=0):
+def plot_side_by_side(df1, df2, countries=[], leg=True, scale='linear', title='', days=0, location='upper left'):
     if days == 0:
         days = len(df1)
     
@@ -83,8 +86,8 @@ def plot_side_by_side(df1, df2, countries=[], leg=True, scale='linear', title=''
             df1[countries].tail(days).plot(figsize=(17,6), ax=ax1)
             df2[countries].tail(days).plot(figsize=(17,6), ax=ax2)
         
-        ax1.legend(frameon=False, loc='upper left')
-        ax2.legend(frameon=False, loc='upper left')
+        ax1.legend(frameon=False, loc=location)
+        ax2.legend(frameon=False, loc=location)
      
     else:
         if not countries:
@@ -113,6 +116,11 @@ def show_everything(country_list, amount_days, header):
     plot_side_by_side(df_cases_relative, df_deaths_relative, title='Linear scale', countries=country_list, days=amount_days)
     plot_side_by_side(df_cases_relative, df_deaths_relative, title='Logaritmic scale', scale='log', countries=country_list, days=amount_days)
     
+    df_cases_threshold = data_from_threshold(df_cases_total, country_list,'cases')
+    df_deaths_threshold = data_from_threshold(df_deaths_total, country_list, 'deaths')
+                                              
+    plot_side_by_side(df_cases_threshold, df_deaths_threshold, title='Logaritmic scale + Normalized translation', scale='log', countries=country_list, location='lower right')
+    
 def show_table(countries):
     ind = [[],[]]
     struct_data = [('New', []), ('Total', []), ('Relative', [])]
@@ -140,3 +148,26 @@ def show_table(countries):
     df = pd.DataFrame(d, index=ind)
         
     display(df.style)
+    
+def data_from_threshold(df, countries, category):
+    d = {}
+    
+    if category == 'cases':
+        start_dates = df_thresholds.iloc[0]
+    else:
+        start_dates = df_thresholds.iloc[1]
+    
+    for country in countries:
+        if country in start_dates.index:
+            date = start_dates[country]
+            d[country] = df.loc[df.index >= date][country].reset_index(drop=True)
+        
+    df = pd.DataFrame(d)
+    df.dropna(axis=0, how='all', subset=None, inplace=True)
+    
+    if category == 'cases':
+        df.name = 'Total cases after first 100'
+    else: 
+        df.name = 'Total deaths after first 10'
+    
+    return df
