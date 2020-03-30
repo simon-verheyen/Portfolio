@@ -18,7 +18,7 @@ df_deaths_total.name = 'Total deaths'
 df_deaths_relative = pd.read_csv('data/deaths_relative.csv').set_index('Date')
 df_deaths_relative.name = 'Deaths over cases'
 
-df_thresholds = pd.read_csv('data/thresholds.csv').set_index('ind')
+df_thresholds = pd.read_csv('data/threshold_dates.csv').set_index('ind')
 df_thresholds.name = 'Threshold dates'
 
 
