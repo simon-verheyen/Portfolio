@@ -10,6 +10,8 @@ df_cases_total = pd.read_csv('data/cases_total.csv').set_index('Date')
 df_cases_total.name = 'Total cases'
 df_cases_relative = pd.read_csv('data/cases_relative.csv').set_index('Date')
 df_cases_relative.name = 'Cases over population size'
+df_cases_weekly = pd.read_csv('data/cases_weekly.csv').set_index('Date')
+df_cases_weekly.name = 'New cases weekly'
 
 df_deaths_new = pd.read_csv('data/deaths_new.csv').set_index('Date')
 df_deaths_new.name = 'New deaths'
@@ -17,6 +19,8 @@ df_deaths_total = pd.read_csv('data/deaths_total.csv').set_index('Date')
 df_deaths_total.name = 'Total deaths'
 df_deaths_relative = pd.read_csv('data/deaths_relative.csv').set_index('Date')
 df_deaths_relative.name = 'Deaths over cases'
+df_deaths_weekly = pd.read_csv('data/deaths_weekly.csv').set_index('Date')
+df_deaths_weekly.name = 'New deaths weekly'
 
 df_thresholds = pd.read_csv('data/threshold_dates.csv').set_index('ind')
 df_thresholds.name = 'Threshold dates'
@@ -166,8 +170,27 @@ def data_from_threshold(df, countries, category):
     df.dropna(axis=0, how='all', subset=None, inplace=True)
     
     if category == 'cases':
-        df.name = 'Total cases after first 100'
+        df.name = 'Cases after first 100'
     else: 
-        df.name = 'Total deaths after first 10'
+        df.name = 'Deaths after first 10'
     
     return df
+
+def plot_trends(countries):
+    plt.figure(figsize=(17,9))
+    for country in countries:
+        x = df_cases_total.loc[df_cases_weekly.index, country].tolist()
+        y = df_cases_weekly[country].tolist()
+
+        plt.plot(x, y, label=country) 
+
+    plt.xlabel('total cases')
+    plt.xscale('log')
+    plt.xlim(xmin=100)
+    
+    plt.ylabel('weekly new cases') 
+    plt.yscale('log')
+    
+    plt.legend(loc='upper left')
+    plt.title('show trend')
+    plt.show()
