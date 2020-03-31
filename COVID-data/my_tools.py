@@ -102,26 +102,62 @@ def plot_global():
     plot_side_by_side(df_global_data['deaths_total'], df_global_data['deaths_relative'], leg=False)
     
     
-def plot_new(countries=[], days=0):
-    sizes = (17, 4)
+def plot_both(subject, countries=[], days=0):
+    sizes = (17, 6)
     
     if days == 0:
         days = len(df_cases_new)
     
     fig, (ax1, ax2) = plt.subplots(ncols=2)
+    label1 = ''
+    label2 = ''
     
-    if countries:
-        df_cases_new[countries].tail(days).plot(figsize=sizes, ax=ax1)
-        df_deaths_new[countries].tail(days).plot(figsize=sizes, ax=ax2, legend=False)
-        ax1.legend(frameon=False, loc='upper left')
-    else: 
-        df_cases_new.tail(days).plot(figsize=sizes, ax=ax1, legend=False)
-        df_deaths_new.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
+    if subject == 'new':
+        title1 = 'New Cases'
+        title2 = 'New deaths'
+        
+        if countries:
+            df_cases_new[countries].tail(days).plot(figsize=sizes, ax=ax1)
+            df_deaths_new[countries].tail(days).plot(figsize=sizes, ax=ax2, legend=False)
+            ax1.legend(frameon=False, loc='upper left')
+        else: 
+            df_cases_new.tail(days).plot(figsize=sizes, ax=ax1, legend=False)
+            df_deaths_new.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
+            
+    elif subject == 'total':
+        title1 = 'Total Cases'
+        title2 = 'Total deaths'
+        
+        if countries:
+            df_cases_total[countries].tail(days).plot(figsize=sizes, ax=ax1)
+            df_deaths_total[countries].tail(days).plot(figsize=sizes, ax=ax2, legend=False)
+            ax1.legend(frameon=False, loc='upper left')
+        else: 
+            df_cases_total.tail(days).plot(figsize=sizes, ax=ax1, legend=False)
+            df_deaths_total.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
+            
+    elif subject == 'total_log':
+        title1 = 'Total Cases (log scale + normalizing translation)'
+        title2 = 'Total deaths (log scale + normalizing translation)'
+        
+        label1 = 'Days since 100 cases'
+        label2 = 'Days since 10 deaths'
+        
+        if countries:
+            df_cases_threshold[countries].dropna(axis=0, how='all').plot(figsize=sizes, ax=ax1, legend=False)
+            df_deaths_threshold[countries].dropna(axis=0, how='all').plot(figsize=sizes, ax=ax2)
+            ax2.legend(frameon=False, loc='lower right')
+        else: 
+            df_cases_threshold.tail(days).plot(figsize=sizes, ax=ax1, legend=False)
+            df_deaths_threshold.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
+        
+        ax1.set_yscale('log')
+        ax2.set_yscale('log')
 
-    ax1.set_title('Cases')
-    ax1.set_xlabel('')
-    ax2.set_title('Deaths')
-    ax2.set_xlabel('')
+    ax1.set_title(title1)
+    ax1.set_xlabel(label1)
+    ax2.set_title(title2)
+    ax2.set_xlabel(label2)
 
     plt.show()
     
