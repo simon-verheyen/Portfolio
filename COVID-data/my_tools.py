@@ -31,6 +31,8 @@ df_deaths_threshold.name = 'Total deaths after threshold'
 
 df_global_data = read_csv('global_data', 'Global data')
 
+today = datetime.date.today()
+
 
 def worst_in_cat(date, category):
     if type(date) == str:
@@ -59,6 +61,16 @@ def worst_in_cat(date, category):
     most = df.index
     
     return most
+
+def find_active():
+    worst_cases_new = worst_in_cat(today, 'cases_new')
+    worst_deaths_new =worst_in_cat(today, 'deaths_new')
+
+    most_active_today = worst_cases_new.intersection(worst_deaths_new)
+    active_countries = most_active_today.tolist()
+    active_countries.sort()
+    
+    return active_countries
     
 def plot_side_by_side(df1, df2, countries=[], leg=True, scale='linear', title='', days=0, location='upper left'):
     if days == 0:
