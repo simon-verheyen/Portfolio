@@ -232,7 +232,7 @@ def show_table(countries=[]):
         countries = df_cases_new.columns
     
     ind = [[],[]]
-    struct_data = [('New', []), ('Total', []), ('Relative', [])]
+    struct_data = [('New daily', []), ('New weekly', []),('Total', []), ('Total relative', [])]
     
     for country in countries:
         ind[0].append(country)
@@ -244,19 +244,22 @@ def show_table(countries=[]):
         struct_data[0][1].append(df_cases_new[country].values[-1])
         struct_data[0][1].append(df_deaths_new[country].values[-1])
         
-        struct_data[1][1].append(df_cases_total[country].values[-1])
-        struct_data[1][1].append(df_deaths_total[country].values[-1])
+        struct_data[1][1].append(df_cases_weekly[country].values[-1])
+        struct_data[1][1].append(df_deaths_weekly[country].values[-1])
+        
+        struct_data[2][1].append(df_cases_total[country].values[-1])
+        struct_data[2][1].append(df_deaths_total[country].values[-1])
         
         cases_perc = f'{df_cases_relative[country].values[-1] * 100 : 9.2f}%'
         deaths_perc = f'{df_deaths_relative[country].values[-1] * 100 : 9.2f}%'
         
-        struct_data[2][1].append(cases_perc)
-        struct_data[2][1].append(deaths_perc)
+        struct_data[3][1].append(cases_perc)
+        struct_data[3][1].append(deaths_perc)
     
     d = {title: content for (title, content) in struct_data}
     df = pd.DataFrame(d, index=ind)
         
-    display(df.style)
+    return df.style
 
 """
 def show_everything(country_list, amount_days):
