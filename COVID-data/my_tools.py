@@ -124,6 +124,18 @@ def plot_both(subject, countries=[], days=0):
             df_cases_new.tail(days).plot(figsize=sizes, ax=ax1, legend=False)
             df_deaths_new.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
             
+    elif subject == 'weekly':
+        title1 = 'Weekly new cases (log scale + normalizing translation)'
+        title2 = 'Weekly new deaths (log scale + normalizing translation)'
+        
+        if countries:
+            df_cases_weekly[countries].tail(days).plot(figsize=sizes, ax=ax1)
+            df_deaths_weekly[countries].tail(days).plot(figsize=sizes, ax=ax2, legend=False)
+            ax1.legend(frameon=False, loc='upper left')
+        else: 
+            df_cases_weekly.tail(days).plot(figsize=sizes, ax=ax1, legend=False)
+            df_deaths_weekly.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
+            
     elif subject == 'total':
         title1 = 'Total Cases'
         title2 = 'Total deaths'
@@ -137,7 +149,7 @@ def plot_both(subject, countries=[], days=0):
             df_deaths_total.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
             
     elif subject == 'total_log':
-        title1 = 'Total Cases (log scale + normalizing translation)'
+        title1 = 'Total cases (log scale + normalizing translation)'
         title2 = 'Total deaths (log scale + normalizing translation)'
         
         label1 = 'Days since 100 cases'
