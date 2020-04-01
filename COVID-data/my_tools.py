@@ -15,23 +15,25 @@ def read_csv(name, title):
 
 df_cases_new = read_csv('cases_new', 'New cases')
 df_cases_total = read_csv('cases_total','Total cases')
-df_cases_relative = read_csv('cases_relative', 'Cases over population size')
 df_cases_weekly = read_csv('cases_weekly', 'New cases weekly')
-
-df_cases_threshold = pd.read_csv('data/cases_threshold.csv').reset_index(drop=True)
-df_cases_threshold.name = 'Total cases after threshold'
 
 df_deaths_new = read_csv('deaths_new', 'New deaths')
 df_deaths_total = read_csv('deaths_total', 'Total deaths')
-df_deaths_relative = read_csv('deaths_relative', 'Deaths over cases')
 df_deaths_weekly = read_csv('deaths_weekly', 'New deaths weekly')
 
-df_deaths_threshold = pd.read_csv('data/deaths_threshold.csv').reset_index(drop=True)
-df_deaths_threshold.name = 'Total deaths after threshold'
+df_prevalence = read_csv('prevalence', 'Prevalence')
+df_incidence = read_csv('incidence', 'Incidence')
+df_mortality = read_csv('mortality', 'Mortality')
 
-df_global_data = read_csv('global_data', 'Global data')
+df_global = read_csv('global', 'Global data')
+
+df_thresholds = pd.read_csv('data/thresholds.csv').set_index('ind')
 
 today = datetime.date.today()
+
+countries = df_cases_new.columns
+dates = df_cases_new.index
+weekly_dates = df_cases_weekly.index
 
 
 def worst_in_cat(date, category):
@@ -45,15 +47,18 @@ def worst_in_cat(date, category):
         df = df_cases_new
     elif category == 'cases_total':
         df = df_cases_total     
-    elif category == 'cases_relative':
-        df = df_cases_relative
         
     elif category == 'deaths_new':
         df = df_deaths_new 
     elif category == 'deaths_total':
         df = df_deaths_total  
-    elif category == 'deaths_relative':
-        df = df_deaths_relative
+        
+    elif category == 'prevalence':
+        df = df_prevalence
+    elif category == 'incidence':
+        df = df_incidence
+    elif category == 'mortality':
+        df = df_mortality
         
     df = df.loc[start_date:end_date]
     df = df.sum(axis=0)
@@ -64,7 +69,7 @@ def worst_in_cat(date, category):
 
 def find_active():
     worst_cases_new = worst_in_cat(today, 'cases_new')
-    worst_deaths_new =worst_in_cat(today, 'deaths_new')
+    worst_deaths_new = worst_in_cat(today, 'deaths_new')
 
     most_active_today = worst_cases_new.intersection(worst_deaths_new)
     active_countries = most_active_today.tolist()
@@ -110,8 +115,8 @@ def plot_side_by_side(df1, df2, countries=[], leg=True, scale='linear', title=''
     plt.show()
 
 def plot_global():
-    plot_side_by_side(df_global_data['cases_total'], df_global_data['cases_relative'], leg=False, title='Global info')
-    plot_side_by_side(df_global_data['deaths_total'], df_global_data['deaths_relative'], leg=False)
+    plot_side_by_side(df_global['cases_total'], df_global['prevalence'], leg=False, title='Global info')
+    plot_side_by_side(df_global['deaths_total'], df_global['mortality'], leg=False)
     
     
 def plot_both(subject, countries=[], days=0):
@@ -125,7 +130,7 @@ def plot_both(subject, countries=[], days=0):
     label2 = ''
     
     if subject == 'new':
-        title1 = 'New Cases'
+        title1 = 'New cases'
         title2 = 'New deaths'
         
         if countries:
@@ -137,8 +142,8 @@ def plot_both(subject, countries=[], days=0):
             df_deaths_new.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
             
     elif subject == 'weekly':
-        title1 = 'Weekly new cases (log scale + normalizing translation)'
-        title2 = 'Weekly new deaths (log scale + normalizing translation)'
+        title1 = 'Weekly new cases'
+        title2 = 'Weekly new deaths'
         
         if countries:
             df_cases_weekly[countries].tail(days).plot(figsize=sizes, ax=ax1)
@@ -167,6 +172,9 @@ def plot_both(subject, countries=[], days=0):
         label1 = 'Days since 100 cases'
         label2 = 'Days since 10 deaths'
         
+        df_cases_threshold = threshold_data(df_cases_total, 'cases', 'daily')
+        df_deaths_threshold = threshold_data(df_deaths_total, 'deaths', 'daily')
+        
         if countries:
             df_cases_threshold[countries].dropna(axis=0, how='all').plot(figsize=sizes, ax=ax1, legend=False)
             df_deaths_threshold[countries].dropna(axis=0, how='all').plot(figsize=sizes, ax=ax2)
@@ -191,12 +199,12 @@ def plot_total(subject ,countries=[], days=0):
     if subject == 'cases':
         name = 'Cases'
         df1 = df_cases_total
-        df2 = df_cases_threshold
+        df2 = threshold_data(df_cases_total, 'cases', 'daily')
     
     if subject == 'deaths':
         name = 'Deaths'
         df1 = df_deaths_total
-        df2 = df_deaths_threshold
+        df2 = threshold_data(df_deaths_total, 'deaths', 'daily')
     
     if days == 0:
         days = len(df_cases_new)
@@ -221,34 +229,62 @@ def plot_total(subject ,countries=[], days=0):
     ax2.set_title('logarithmic + normalizing translation')
 
     plt.show()
+
+def threshold_data(df, subject, period, countries=countries):
+    d = {}
+
+    for country in countries:
+        if subject == 'cases':
+            start_date = df_thresholds.at['cases', country]
+        elif subject == 'deaths':
+            start_date = df_thresholds.at['deaths', country]
+
+        if period == 'daily':
+            mask = df.index >= start_date
+        elif period == 'weekly':
+            allowed_dates = df.index[df.index >= start_date]
+            allowed_weekly = allowed_dates[[date in weekly_dates for date in allowed_dates]]
+            mask = [date in allowed_weekly for date in df.index]
+
+        if not any(mask):
+            mask = [False for i in range(len(df.index))]
+            
+        country_data = df.loc[mask][country].reset_index(drop=True)
+        d[country] = country_data
+
+    df_new = pd.DataFrame(d)
+
+    return df_new
+        
         
 def plot_trends(countries=[]):
     plt.figure(figsize=(17,6))
     leg = True
+    
+    df_x = threshold_data(df_cases_total, 'cases', 'weekly')
+    df_y = threshold_data(df_cases_weekly, 'cases', 'weekly')
     
     if countries == []:
         countries = df_cases_total.columns
         leg = False
     
     for country in countries:
-        x = df_cases_total.loc[df_cases_weekly.index, country].tolist()
-        y = df_cases_weekly[country].tolist()
-        
         if leg:
-            plt.plot(x, y, label=country)
+            plt.plot(df_x[country], df_y[country], label=country)
         else:
-            plt.plot(x, y)
-
-    plt.xlabel('total cases')
+            plt.plot(df_x[country], df_y[country])
+         
+    if leg:
+        plt.legend(loc='upper left', frameon=False)
+        
+    plt.xlabel('Total cases')
     plt.xscale('log')
     plt.xlim(xmin=100)
     
     plt.ylabel('weekly new cases') 
     plt.yscale('log')
-    
-    if leg:
-        plt.legend(loc='upper left', frameon=False)
-    plt.title('Trends')
+        
+    plt.title('Trends (logarithmic scale)')
     plt.show()
     
 def show_table(countries=[]):
@@ -256,7 +292,15 @@ def show_table(countries=[]):
         countries = df_cases_new.columns
     
     ind = [[],[]]
-    struct_data = [('New daily', []), ('New weekly', []),('Total', []), ('Total relative', [])]
+    dict_data = {}
+    
+    daily = []
+    weekly = []
+    total = []
+    
+    prevalence = []
+    incidence = []
+    mortality = []
     
     for country in countries:
         ind[0].append(country)
@@ -265,72 +309,32 @@ def show_table(countries=[]):
         ind[1].append('Cases')
         ind[1].append('Deaths')
         
-        struct_data[0][1].append(df_cases_new[country].values[-1])
-        struct_data[0][1].append(df_deaths_new[country].values[-1])
+        daily.append(df_cases_new[country].values[-1])
+        daily.append(df_deaths_new[country].values[-1])
         
-        struct_data[1][1].append(df_cases_weekly[country].values[-1])
-        struct_data[1][1].append(df_deaths_weekly[country].values[-1])
+        weekly.append(df_cases_weekly[country].values[-1])
+        weekly.append(df_deaths_weekly[country].values[-1])
         
-        struct_data[2][1].append(df_cases_total[country].values[-1])
-        struct_data[2][1].append(df_deaths_total[country].values[-1])
+        total.append(df_cases_total[country].values[-1])
+        total.append(df_deaths_total[country].values[-1])
         
-        cases_perc = f'{df_cases_relative[country].values[-1] * 100 : 9.2f}%'
-        deaths_perc = f'{df_deaths_relative[country].values[-1] * 100 : 9.2f}%'
+        prevalence.append(f'{df_prevalence[country].values[-1] * 100 : 9.2f}%')
+        prevalence.append('')
         
-        struct_data[3][1].append(cases_perc)
-        struct_data[3][1].append(deaths_perc)
+        incidence.append(f'{df_incidence[country].values[-1] * 100 : 9.3f}%')
+        incidence.append('')
+        
+        mortality.append('')
+        mortality.append(f'{df_mortality[country].values[-1] * 100 : 9.2f}%')
     
-    d = {title: content for (title, content) in struct_data}
-    df = pd.DataFrame(d, index=ind)
+    dict_data['New daily'] = daily
+    dict_data['New weekly'] = weekly
+    dict_data['Total'] = total
+    
+    dict_data['Prevalence'] = prevalence
+    dict_data['Incidence'] = incidence
+    dict_data['Mortality'] = mortality
+    
+    df = pd.DataFrame(dict_data, index=ind)
         
     return df.style
-
-"""
-def show_everything(country_list, amount_days):
-    plot_new(country_list, days=amount_days)
-    plot_3('cases', countries=country_list, days=amount_days)
-    plot_3('deaths', countries=country_list, days=amount_days)
-    plot_trends(country_list)
-    show_table(country_list)
-    
-def plot_3(subject, countries=[], days=0, location='upper left'):
-    sizes = (17, 4)
-    if days == 0:
-        days = len(df_cases_new)
-    
-    if subject == 'cases':
-        name = 'TOTAL CASES'
-        df1 = df_cases_total
-        df2 = df_cases_threshold
-    
-    if subject == 'deaths':
-        name = 'TOTAL DEATHS'
-        df1 = df_deaths_total
-        df2 = df_deaths_threshold
-    
-    fig, (ax1, ax2, ax3) = plt.subplots(ncols=3)
-    fig.suptitle(name)
-        
-    if not countries:
-        df1.tail(days).plot(figsize=sizes, ax=ax1, legend=False)
-        df1.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
-        df2.plot(figsize=sizes, ax=ax3, legend=False)
-    else:
-        df1[countries].tail(days).plot(figsize=sizes, ax=ax1, legend=False)
-        df1[countries].tail(days).plot(figsize=sizes, ax=ax2, legend=False)
-        df2[countries].plot(figsize=sizes, ax=ax3, legend=False)
-    
-    ax3.legend(frameon=False, loc='lower right')
-    
-    ax1.set_xlabel('')
-    ax1.set_title('linear')
-  
-    ax2.set_xlabel('')
-    ax2.set_yscale('log')
-    ax2.set_title('logarithmic')
-    
-    ax3.set_xlabel('')
-    ax3.set_yscale('log')
-    ax3.set_title('logarithmic, from threshold')
-    
-    plt.show()"""
