@@ -13,16 +13,17 @@ def read_csv(name, title):
     return df
 
 
-df_cases_new = read_csv('cases_new', 'New cases')
+df_cases_daily = read_csv('cases_daily', 'daily cases')
 df_cases_total = read_csv('cases_total','Total cases')
 df_cases_weekly = read_csv('cases_weekly', 'New cases weekly')
 
-df_deaths_new = read_csv('deaths_new', 'New deaths')
+df_deaths_daily = read_csv('deaths_daily', 'daily deaths')
 df_deaths_total = read_csv('deaths_total', 'Total deaths')
 df_deaths_weekly = read_csv('deaths_weekly', 'New deaths weekly')
 
 df_prevalence = read_csv('prevalence', 'Prevalence')
-df_incidence = read_csv('incidence', 'Incidence')
+df_incidence_daily = read_csv('incidence_daily', 'Daily incidence')
+df_incidence_weekly = read_csv('incidence_weekly', 'Weekly incidence')
 df_mortality = read_csv('mortality', 'Mortality')
 
 df_global = read_csv('global', 'Global data')
@@ -31,8 +32,8 @@ df_thresholds = pd.read_csv('data/thresholds.csv').set_index('ind')
 
 today = datetime.date.today()
 
-countries = df_cases_new.columns
-dates = df_cases_new.index
+countries = df_cases_daily.columns
+dates = df_cases_daily.index
 weekly_dates = df_cases_weekly.index
 
 
@@ -43,20 +44,23 @@ def worst_in_cat(date, category):
     start_date = str(date - datetime.timedelta(days=7))
     end_date = str(date)
     
-    if category == 'cases_new':
-        df = df_cases_new
+    if category == 'cases_daily':
+        df = df_cases_daily
     elif category == 'cases_total':
         df = df_cases_total     
         
-    elif category == 'deaths_new':
-        df = df_deaths_new 
+    elif category == 'deaths_daily':
+        df = df_deaths_daily 
     elif category == 'deaths_total':
         df = df_deaths_total  
         
     elif category == 'prevalence':
         df = df_prevalence
-    elif category == 'incidence':
-        df = df_incidence
+    elif category == 'incidence_daily':
+        df = df_incidence_daily
+    elif category == 'incidence_weekly':
+        df = df_incidence_weekly
+        
     elif category == 'mortality':
         df = df_mortality
         
@@ -68,11 +72,11 @@ def worst_in_cat(date, category):
     return most
 
 def find_active():
-    worst_cases_new = worst_in_cat(today, 'cases_new')
-    worst_deaths_new = worst_in_cat(today, 'deaths_new')
+    worst_cases = worst_in_cat(today, 'cases_daily')
+    worst_deaths = worst_in_cat(today, 'deaths_daily')
 
-    most_active_today = worst_cases_new.intersection(worst_deaths_new)
-    active_countries = most_active_today.tolist()
+    most_active = worst_cases.intersection(worst_deaths)
+    active_countries = most_active.tolist()
     active_countries.sort()
     
     return active_countries
@@ -123,27 +127,27 @@ def plot_both(subject, countries=[], days=0):
     sizes = (17, 6)
     
     if days == 0:
-        days = len(df_cases_new)
+        days = len(df_cases_daily)
     
     fig, (ax1, ax2) = plt.subplots(ncols=2)
     label1 = ''
     label2 = ''
     
-    if subject == 'new':
-        title1 = 'New cases'
-        title2 = 'New deaths'
+    if subject == 'daily':
+        title1 = 'Daily cases'
+        title2 = 'Daily deaths'
         
         if countries:
-            df_cases_new[countries].tail(days).plot(figsize=sizes, ax=ax1)
-            df_deaths_new[countries].tail(days).plot(figsize=sizes, ax=ax2, legend=False)
+            df_cases_daily[countries].tail(days).plot(figsize=sizes, ax=ax1)
+            df_deaths_daily[countries].tail(days).plot(figsize=sizes, ax=ax2, legend=False)
             ax1.legend(frameon=False, loc='upper left')
         else: 
-            df_cases_new.tail(days).plot(figsize=sizes, ax=ax1, legend=False)
-            df_deaths_new.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
+            df_cases_daily.tail(days).plot(figsize=sizes, ax=ax1, legend=False)
+            df_deaths_daily.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
             
     elif subject == 'weekly':
-        title1 = 'Weekly new cases'
-        title2 = 'Weekly new deaths'
+        title1 = 'Weekly cases'
+        title2 = 'Weekly deaths'
         
         if countries:
             df_cases_weekly[countries].tail(days).plot(figsize=sizes, ax=ax1)
@@ -154,7 +158,7 @@ def plot_both(subject, countries=[], days=0):
             df_deaths_weekly.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
             
     elif subject == 'total':
-        title1 = 'Total Cases'
+        title1 = 'Total cases'
         title2 = 'Total deaths'
         
         if countries:
@@ -164,7 +168,7 @@ def plot_both(subject, countries=[], days=0):
         else: 
             df_cases_total.tail(days).plot(figsize=sizes, ax=ax1, legend=False)
             df_deaths_total.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
-            
+    
     elif subject == 'total_log':
         title1 = 'Total cases (log scale + normalizing translation)'
         title2 = 'Total deaths (log scale + normalizing translation)'
@@ -185,7 +189,7 @@ def plot_both(subject, countries=[], days=0):
         
         ax1.set_yscale('log')
         ax2.set_yscale('log')
-
+            
     ax1.set_title(title1)
     ax1.set_xlabel(label1)
     ax2.set_title(title2)
@@ -207,7 +211,7 @@ def plot_total(subject ,countries=[], days=0):
         df2 = threshold_data(df_deaths_total, 'deaths', 'daily')
     
     if days == 0:
-        days = len(df_cases_new)
+        days = len(df_cases_daily)
     
     fig, (ax1, ax2) = plt.subplots(ncols=2)
     
@@ -289,7 +293,7 @@ def plot_trends(countries=[]):
     
 def show_table(countries=[]):
     if countries == []:
-        countries = df_cases_new.columns
+        countries = df_cases_daily.columns
     
     ind = [[],[]]
     dict_data = {}
@@ -299,7 +303,8 @@ def show_table(countries=[]):
     total = []
     
     prevalence = []
-    incidence = []
+    incidence_daily = []
+    incidence_weekly = []
     mortality = []
     
     for country in countries:
@@ -309,8 +314,8 @@ def show_table(countries=[]):
         ind[1].append('Cases')
         ind[1].append('Deaths')
         
-        daily.append(df_cases_new[country].values[-1])
-        daily.append(df_deaths_new[country].values[-1])
+        daily.append(df_cases_daily[country].values[-1])
+        daily.append(df_deaths_daily[country].values[-1])
         
         weekly.append(df_cases_weekly[country].values[-1])
         weekly.append(df_deaths_weekly[country].values[-1])
@@ -321,18 +326,22 @@ def show_table(countries=[]):
         prevalence.append(f'{df_prevalence[country].values[-1] * 100 : 9.2f}%')
         prevalence.append('')
         
-        incidence.append(f'{df_incidence[country].values[-1] * 100 : 9.3f}%')
-        incidence.append('')
+        incidence_daily.append(f'{df_incidence_daily[country].values[-1] * 100 : 9.3f}%')
+        incidence_daily.append('')
+        
+        incidence_weekly.append(f'{df_incidence_weekly[country].values[-1] * 100 : 9.3f}%')
+        incidence_weekly.append('')
         
         mortality.append('')
         mortality.append(f'{df_mortality[country].values[-1] * 100 : 9.2f}%')
     
-    dict_data['New daily'] = daily
-    dict_data['New weekly'] = weekly
+    dict_data['Daily'] = daily
+    dict_data['Weekly'] = weekly
     dict_data['Total'] = total
     
     dict_data['Prevalence'] = prevalence
-    dict_data['Incidence'] = incidence
+    dict_data['Incidence daily'] = incidence_daily
+    dict_data['Incidence weekly'] = incidence_weekly
     dict_data['Mortality'] = mortality
     
     df = pd.DataFrame(dict_data, index=ind)
