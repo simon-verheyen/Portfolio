@@ -30,11 +30,11 @@ df_global = read_csv('global', 'Global data')
 
 df_thresholds = pd.read_csv('../data/thresholds.csv').set_index('ind')
 
-today = datetime.date.today()
-
 countries = df_cases_daily.columns
 dates = df_cases_daily.index
 weekly_dates = df_cases_weekly.index
+
+latest_date = dates[-1]
 
 
 def worst_in_cat(date, category):
@@ -72,8 +72,8 @@ def worst_in_cat(date, category):
     return most
 
 def find_active():
-    worst_cases = worst_in_cat(today, 'cases_daily')
-    worst_deaths = worst_in_cat(today, 'deaths_daily')
+    worst_cases = worst_in_cat(latest_date, 'cases_daily')
+    worst_deaths = worst_in_cat(latest_date, 'deaths_daily')
 
     most_active = worst_cases.intersection(worst_deaths)
     active_countries = most_active.tolist()
@@ -265,7 +265,7 @@ def threshold_data(df, subject, period, countries=countries):
     return df_new
         
         
-def plot_trends(countries=[]):
+def plot_trends(countries=[], log=True):
     plt.figure(figsize=(17,6))
     leg = True
     
@@ -286,14 +286,21 @@ def plot_trends(countries=[]):
         plt.legend(loc='upper left', frameon=False)
         
     plt.xlabel('Total cases')
-    plt.xscale('log')
     plt.xlim(xmin=100)
     
     plt.ylabel('weekly new cases') 
-    plt.yscale('log')
+    
+    if log:
+        plt.xscale('log')
+        plt.yscale('log')
         
     plt.title('Trends (logarithmic scale)')
     plt.show()
+    
+def convert_to_percent(x):
+    str_x = f'{x * 100 : 9.3f}%'
+    
+    return str_x
     
 def show_table(countries=[]):
     if countries == []:
@@ -311,6 +318,34 @@ def show_table(countries=[]):
     incidence_weekly = []
     mortality = []
     
+    ind[0].append('Global')
+    ind[0].append('Global')
+
+    ind[1].append('Cases')
+    ind[1].append('Deaths')
+    
+    daily.append(df_global['cases_daily'].values[-1])
+    daily.append(df_global['deaths_daily'].values[-1])
+
+    weekly.append(df_cases_weekly.iloc[-1:].sum(axis=1).values[0])
+    weekly.append(df_deaths_weekly.iloc[-1:].sum(axis=1).values[0])
+
+    total.append(df_global['cases_total'].values[-1])
+    total.append(df_global['deaths_total'].values[-1])
+
+    prevalence.append(convert_to_percent(df_global['prevalence'].values[-1]))
+    prevalence.append('')
+
+    incidence_daily.append(convert_to_percent(df_global['incidence_daily'].values[-1]))
+    incidence_daily.append('')
+
+    incidence_weekly.append(convert_to_percent(df_incidence_weekly.iloc[-1:].sum(axis=1).values[0]))
+    incidence_weekly.append('')
+
+    mortality.append('')
+    mortality.append(convert_to_percent(df_global['mortality'].values[-1]))
+    
+    
     for country in countries:
         ind[0].append(country)
         ind[0].append(country)
@@ -327,17 +362,17 @@ def show_table(countries=[]):
         total.append(df_cases_total[country].values[-1])
         total.append(df_deaths_total[country].values[-1])
         
-        prevalence.append(f'{df_prevalence[country].values[-1] * 100 : 9.2f}%')
+        prevalence.append(convert_to_percent(df_prevalence[country].values[-1]))
         prevalence.append('')
         
-        incidence_daily.append(f'{df_incidence_daily[country].values[-1] * 100 : 9.3f}%')
+        incidence_daily.append(convert_to_percent(df_incidence_daily[country].values[-1]))
         incidence_daily.append('')
         
-        incidence_weekly.append(f'{df_incidence_weekly[country].values[-1] * 100 : 9.3f}%')
+        incidence_weekly.append(convert_to_percent(df_incidence_weekly[country].values[-1]))
         incidence_weekly.append('')
         
         mortality.append('')
-        mortality.append(f'{df_mortality[country].values[-1] * 100 : 9.2f}%')
+        mortality.append(convert_to_percent(df_mortality[country].values[-1]))
     
     dict_data['Today'] = daily
     dict_data['This week'] = weekly
