@@ -5,7 +5,7 @@ import datetime
 
 
 def read_csv(name, title):
-    df = pd.read_csv('data/' + name + '.csv')
+    df = pd.read_csv('../data/' + name + '.csv')
     df['Date'] = df['Date'].astype('datetime64[ns]') 
     df = df.set_index('Date')
     df.name = title
@@ -28,7 +28,7 @@ df_mortality = read_csv('mortality', 'Mortality')
 
 df_global = read_csv('global', 'Global data')
 
-df_thresholds = pd.read_csv('data/thresholds.csv').set_index('ind')
+df_thresholds = pd.read_csv('../data/thresholds.csv').set_index('ind')
 
 today = datetime.date.today()
 
@@ -123,7 +123,7 @@ def plot_global():
     plot_side_by_side(df_global['deaths_total'], df_global['mortality'], leg=False)
     
     
-def plot_both(subject, countries=[], days=0):
+def plot_spread(subject, countries=[], days=0):
     sizes = (17, 6)
     
     if days == 0:
@@ -149,13 +149,15 @@ def plot_both(subject, countries=[], days=0):
         title1 = 'Weekly cases'
         title2 = 'Weekly deaths'
         
+        weeks = int(days / 7)
+        
         if countries:
-            df_cases_weekly[countries].tail(days).plot(figsize=sizes, ax=ax1)
-            df_deaths_weekly[countries].tail(days).plot(figsize=sizes, ax=ax2, legend=False)
+            df_cases_weekly[countries].tail(weeks).plot(figsize=sizes, ax=ax1)
+            df_deaths_weekly[countries].tail(weeks).plot(figsize=sizes, ax=ax2, legend=False)
             ax1.legend(frameon=False, loc='upper left')
         else: 
-            df_cases_weekly.tail(days).plot(figsize=sizes, ax=ax1, legend=False)
-            df_deaths_weekly.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
+            df_cases_weekly.tail(weeks).plot(figsize=sizes, ax=ax1, legend=False)
+            df_deaths_weekly.tail(weeks).plot(figsize=sizes, ax=ax2, legend=False)
             
     elif subject == 'total':
         title1 = 'Total cases'
@@ -188,7 +190,9 @@ def plot_both(subject, countries=[], days=0):
             df_deaths_threshold.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
         
         ax1.set_yscale('log')
+        ax1.set_ylim(ymin=100)
         ax2.set_yscale('log')
+        ax2.set_ylim(ymin=10)
             
     ax1.set_title(title1)
     ax1.set_xlabel(label1)
@@ -335,13 +339,13 @@ def show_table(countries=[]):
         mortality.append('')
         mortality.append(f'{df_mortality[country].values[-1] * 100 : 9.2f}%')
     
-    dict_data['Daily'] = daily
-    dict_data['Weekly'] = weekly
+    dict_data['Today'] = daily
+    dict_data['This week'] = weekly
     dict_data['Total'] = total
     
     dict_data['Prevalence'] = prevalence
-    dict_data['Incidence daily'] = incidence_daily
-    dict_data['Incidence weekly'] = incidence_weekly
+    dict_data['Incidence today'] = incidence_daily
+    dict_data['Incidence this week'] = incidence_weekly
     dict_data['Mortality'] = mortality
     
     df = pd.DataFrame(dict_data, index=ind)
