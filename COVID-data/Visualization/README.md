@@ -1,16 +1,16 @@
 # Data visualizations
 
-This directory will hold the notebooks that contain the graphs and show the collected data in a structured way.<br>
-For each topic there will be an accompanying notebook that will go over why the graphs shown are the way that they are and how to reaad and interpret them.
+This directory holds the notebooks that show the collected data through graphs on interesting collections of countries in a structured way.<br>
+For each topic there is be an accompanying notebook (-Explanation) that will go over why each graph is shown and how to read and interpret them.
 
 ### Work order: 
- - Add countries that beat infection to spread data
- - Finalize spread graphs explinations.
+ - Add countries that beat outbreak to spread data
+ - Finalize spread graphs explanations.
   
- - Addhighlights in data tables
+ - Add highlights in data tables
  
  - Add country impact graphs
- - Add country impact explinations
+ - Add country impact explanations
  
  - Analyse spread data
  - Analyse impact data
