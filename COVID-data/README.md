@@ -17,4 +17,4 @@ This is the main directory for viewers, containing the notebooks that visualise 
 
 ### Data: 
 
-Contains the datasets. These can be opened and viewed in their entity.
+Contains all the datasets, which can be opened and viewed in their entity.
