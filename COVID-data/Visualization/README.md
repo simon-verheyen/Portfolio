@@ -1,4 +1,7 @@
-# Data visualization and analysis:
+# Data visualizations
+
+This directory will hold the notebooks that contain the graphs and show the collected data in a structured way.<br>
+For each topic there will be an accompanying notebook that will go over why the graphs shown are the way that they are and how to reaad and interpret them.
 
 ### Work order: 
  - Add countries that beat infection to spread data
