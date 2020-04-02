@@ -1,6 +1,6 @@
 # Data visualizations
 
-This directory holds the notebooks that show the collected data through graphs on interesting collections of countries in a structured way.<br>
+This directory holds the notebooks that show the collected data through graphs on interesting collections of countries in a structured way.
 For each topic there is be an accompanying notebook (-Explanation) that will go over why each graph is shown and how to read and interpret them.
 
 ### Work order: 
