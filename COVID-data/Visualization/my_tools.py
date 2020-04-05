@@ -79,7 +79,7 @@ def find_recovered(period=5):
     return recovered
 
 def plot_global():
-    plot_side_by_side(df_global['cases_total'], df_global['prevalence'], leg=False, title='Global info')
+    plot_side_by_side(df_global['incidence_daily'], df_global['prevalence'], leg=False, title='Global info')
     plot_side_by_side(df_global['deaths_total'], df_global['mortality'], leg=False)
     
     
@@ -93,13 +93,26 @@ def plot_spread(subject, countries=[], scale='lin', days=0):
     label1 = ''
     label2 = ''
     
-    df1 = eval('df_cases_' + subject)
-    df2 = eval('df_deaths_' + subject)
-    
-    if scale == 'lin':
+    if subject == 'incidence':
+        df1 = df_incidence_daily
+        df2 = df_incidence_weekly
+        
+        title1 = 'Incidence (daily cases / population)'
+        title2 = 'Incidence (weekly cases / population)'
+    elif subject == 'prevalence':
+        df1 = df_prevalence
+        df2 = df_mortality
+        
+        title1 = 'Prevalence (total cases / population)'
+        title2 = 'Mortality'
+    else:
+        df1 = eval('df_cases_' + subject)
+        df2 = eval('df_deaths_' + subject)
+        
         title1 = subject.capitalize() + ' cases'
         title2 = subject.capitalize() + ' deaths'
     
+    if scale == 'lin':
         if countries:
             df1[countries].tail(days).plot(figsize=sizes, ax=ax1)
             df2[countries].tail(days).plot(figsize=sizes, ax=ax2, legend=False)
@@ -109,13 +122,13 @@ def plot_spread(subject, countries=[], scale='lin', days=0):
             df2.tail(days).plot(figsize=sizes, ax=ax2, legend=False)   
             
     elif scale == 'log':
-        title1 = subject.capitalize() + ' cases (log scale + normalizing translation)'
-        title2 = subject.capitalize() + ' deaths (log scale + normalizing translation)'
+        title1 = title1 + ' (log scale + normalizing translation)'
+        title2 = title2 + ' (log scale + normalizing translation)'
         
         label1 = 'Days since 100 cases'
         label2 = 'Days since 10 deaths'
         
-        if subject in ['daily, total']:
+        if subject in ['daily', 'total', 'incidence_daily']:
             per = 'daily'
         else:
             per = 'weekly'
@@ -279,11 +292,6 @@ def show_table(countries=[]):
     df = pd.DataFrame(dict_data, index=ind)
         
     return df.style
-
-
-"""
-OLD FUNCTIONS:
-
     
 def plot_side_by_side(df1, df2, countries=[], leg=True, scale='linear', title='', days=0, location='upper left'):
     if days == 0:
@@ -321,4 +329,3 @@ def plot_side_by_side(df1, df2, countries=[], leg=True, scale='linear', title=''
     ax2.set_title(df2.name)
     
     plt.show()
-""" 
