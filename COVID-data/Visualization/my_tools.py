@@ -13,61 +13,59 @@ def read_csv(name, title):
     return df
 
 
-df_cases_daily = read_csv('cases_daily', 'daily cases')
+df_cases_daily = read_csv('cases_daily', 'Daily cases')
+df_cases_3days = read_csv('cases_3days', '3 days average cases')
+df_cases_weekly = read_csv('cases_weekly', 'Weekly cases weekly')
 df_cases_total = read_csv('cases_total','Total cases')
-df_cases_weekly = read_csv('cases_weekly', 'New cases weekly')
 
-df_deaths_daily = read_csv('deaths_daily', 'daily deaths')
+df_deaths_daily = read_csv('deaths_daily', 'Daily deaths')
+df_deaths_3days = read_csv('deaths_3days', '3 days average  deaths')
+df_deaths_weekly = read_csv('deaths_weekly', 'Weekly deaths')
 df_deaths_total = read_csv('deaths_total', 'Total deaths')
-df_deaths_weekly = read_csv('deaths_weekly', 'New deaths weekly')
 
-df_prevalence = read_csv('prevalence', 'Prevalence')
+
 df_incidence_daily = read_csv('incidence_daily', 'Daily incidence')
+df_incidence_3days = read_csv('incidence_3days', '3days incidence')
 df_incidence_weekly = read_csv('incidence_weekly', 'Weekly incidence')
+
+df_thresholds = pd.read_csv('../data/thresholds.csv').set_index('ind')
+                              
+df_prevalence = read_csv('prevalence', 'Prevalence')
 df_mortality = read_csv('mortality', 'Mortality')
 
 df_global = read_csv('global', 'Global data')
 
-df_thresholds = pd.read_csv('../data/thresholds.csv').set_index('ind')
+df_africa = read_csv('africa', 'African data')
+df_asia = read_csv('asia', 'Asian data')
+df_europe = read_csv('europe', 'European data')
+df_north_america = read_csv('north_america', 'North_american data')
+df_oceania = read_csv('oceania', 'Oceania data')
+df_south_america = read_csv('south_america', 'South American data')
 
-countries = df_cases_daily.columns
-dates = df_cases_daily.index
+countries_all = df_cases_daily.columns
+dates_daily = df_cases_daily.index
+dates_3days = df_cases_3days.index
 dates_weekly = df_cases_weekly.index
 
-latest_date = dates[-1]
+latest_date = dates_daily[-1]
 
 
-def worst_in_cat(date, subject):
+def worst_in_cat(date, subj, period=6):
     if type(date) == str:
         date = datetime.datetime.strptime(date, '%Y-%m-%d')
     
-    start_date = str(date - datetime.timedelta(days=7))
-    end_date = str(date)
+    start_date = date - datetime.timedelta(days=period)
 
-    df = eval('df_' + subject)
+    df = eval('df_' + subj)
         
     df = df.loc[start_date:end_date]
     df = df.sum(axis=0)
     df = df.nlargest(10)
-    most = df.index
+    worst = df.index
     
-    return most
+    return worst
 
-def find_active(subject='cases', date=latest_date):
-    if subject == 'cases':
-        worst_cases = worst_in_cat(latest_date, 'cases_daily')
-        worst_deaths = worst_in_cat(latest_date, 'deaths_daily')
-    elif subject == 'incidence':
-        worst_cases = worst_in_cat(latest_date, 'incidence_daily')
-        worst_deaths = worst_in_cat(latest_date, 'mortality')
-
-    most_active = worst_cases.intersection(worst_deaths)
-    active_countries = most_active.tolist()
-    active_countries.sort()
-    
-    return active_countries
-
-def find_recovered(period=5):
+def find_recovered(period=7):
     start_date = latest_date - datetime.timedelta(days=period)
     recovered = []
     
@@ -93,24 +91,40 @@ def plot_spread(subject, countries=[], scale='lin', days=0):
     label1 = ''
     label2 = ''
     
-    if subject == 'incidence':
+    if subject == 'incidence_daily':
         df1 = df_incidence_daily
-        df2 = df_incidence_weekly
+        df2 = df_prevalence
         
         title1 = 'Incidence (daily cases / population)'
-        title2 = 'Incidence (weekly cases / population)'
-    elif subject == 'prevalence':
-        df1 = df_prevalence
-        df2 = df_mortality
+        title2 = 'Prevalence (total cases / population)'
         
-        title1 = 'Prevalence (total cases / population)'
-        title2 = 'Mortality'
+        per = 'daily'
+    elif subject == 'incidence_weekly':
+        df1 = df_incidence_weekly
+        df2 = df_prevalence
+        
+        title1 = 'Incidence (weekly cases / population)'
+        title2 = 'Prevalence (total cases / population)'
+        
+        per = 'weekly'
+    elif subject == 'incidence_3days':
+        df1 = df_incidence_3days
+        df2 = df_prevalence
+        
+        title1 = 'Incidence (3day av. cases / population)'
+        title2 = 'Prevalence (total cases / population)'
+        
+        per = '3days'
     else:
         df1 = eval('df_cases_' + subject)
         df2 = eval('df_deaths_' + subject)
         
         title1 = subject.capitalize() + ' cases'
         title2 = subject.capitalize() + ' deaths'
+        
+        per = subject
+        if subject == 'total':
+            per = 'daily'
     
     if scale == 'lin':
         if countries:
@@ -130,11 +144,14 @@ def plot_spread(subject, countries=[], scale='lin', days=0):
         
         if subject in ['daily', 'total', 'incidence_daily']:
             per = 'daily'
+        elif subject in ['3days', 'incidence_3days']:
+            per = '3days'
         else:
             per = 'weekly'
         
         df1 = threshold_data(df1, 'cases', per)
         df2 = threshold_data(df2, 'deaths', per)
+        
         
         if countries:
             df1[countries].dropna(axis=0, how='all').plot(figsize=sizes, ax=ax1, legend=False)
@@ -145,90 +162,77 @@ def plot_spread(subject, countries=[], scale='lin', days=0):
             df2.tail(days).plot(figsize=sizes, ax=ax2, legend=False)
         
         ax1.set_yscale('log')
-        ax1.set_ylim(ymin=100)
         ax2.set_yscale('log')
-        ax2.set_ylim(ymin=10)
             
     ax1.set_title(title1)
     ax1.set_xlabel(label1)
+    #ax1.set_ylim(ymin=100)
     ax2.set_title(title2)
     ax2.set_xlabel(label2)
+    #ax2.set_ylim(ymin=10)
 
     plt.show()
     
-def threshold_data(df, subject, period, countries=countries, reset=True):
+def threshold_data(df, subj, per, countries=countries_all, reset=True):
     d = {}
 
     for country in countries:
-        start_date = df_thresholds.at[subject, country]
+        start_date = df_thresholds.at[subj, country]
 
-        if period == 'daily':
-            mask = df.index >= start_date
-        elif period == 'weekly':
-            allowed_dates = df.index[df.index >= start_date]
-            allowed_weekly = allowed_dates[[date in dates_weekly for date in allowed_dates]]
-            mask = [date in allowed_weekly for date in df.index]
-
-        if not any(mask):
-            mask = [False for i in range(len(df.index))]
-            
+        allowed_dates = df.index[df.index >= start_date]
+        allowed_dates = allowed_dates[[date in eval('dates_' + per) for date in allowed_dates]]
+        mask = [date in allowed_dates for date in df.index]
+        
+        country_data = df.loc[mask][country]
         if reset: 
-            country_data = df.loc[mask][country].reset_index(drop=True)
-        else: 
-            country_data = df.loc[mask][country]
+            country_data = country_data.reset_index(drop=True)
+            
         d[country] = country_data
 
     df_new = pd.DataFrame(d)
 
     return df_new
         
-def plot_trends(countries=[], log=True, glob=True, subject='spread'):
+def plot_trends(countries=countries_all, log=True, glob=True, subject='spread', per='weekly'):
     plt.figure(figsize=(17,9))
     leg = True
     
     if subject == 'impact':
         x = 'prevalence'
-        y = 'incidence_weekly'
+        y = 'incidence_' + per
         
         plt.xlabel('Prevalence (total cases / population)')
-        plt.ylabel('Incidence (weekly cases / population)') 
+        plt.ylabel('Incidence (' + per + ' cases / population)') 
     elif subject == 'spread':
         x = 'cases_total'
-        y = 'cases_weekly'
+        y = 'cases_' + per
         
         plt.xlabel('Total cases')
-        plt.ylabel('Weekly cases')
+        plt.ylabel(per + ' cases')
     
     df_x_full = eval('df_' + x)
     df_y_full = eval('df_' + y)
     
-    df_x_full = threshold_data(df_x_full, 'cases', 'weekly', reset=True)
-    df_y_full = threshold_data(df_y_full, 'cases', 'weekly', reset=True)
+    df_x_full = threshold_data(df_x_full, 'cases', per, countries, reset=True)
+    df_y_full = threshold_data(df_y_full, 'cases', per, countries, reset=True)
     
-    if countries == []:
-        countries = df_prevelance.columns
-        leg = False
-    
-    for country in countries:
-        if leg:
-            plt.plot(df_x_full[country], df_y_full[country], label=country)
-        else:
-            plt.plot(df_x_full[country], df_y_full[country])
-            
     if glob:
-        df_global_trends = df_global.loc[df_global['cases_total'] > 100]
-        df_global_trends = df_global_trends.loc[df_cases_weekly.index, [x, y]]
+        df_global_trends = df_global.loc[df_global['cases_total'] > 100, [x, y]]
+        df_global_trends = df_global_trends.loc[eval('dates_' + per)]
         
         plt.plot(df_global_trends[x], df_global_trends[y], label='Global')
+
+    for country in countries:
+        plt.plot(df_x_full[country], df_y_full[country], label=country)
         
-    if leg:
+    if len(countries) != len(countries_all):
         plt.legend(loc='upper left', frameon=False)
     
     if log:
         plt.xscale('log')
         plt.yscale('log')
         
-    plt.title('Trends (logarithmic scale)')
+    plt.title('Trends')
     plt.show()
     
 def convert_to_percent(x):
