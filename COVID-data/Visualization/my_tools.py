@@ -230,7 +230,7 @@ def plot_trends_dynamically(name, countries=[]):
         ax.set_title('Trends (logarithmic scale)')
         
     anim = animation.FuncAnimation(fig, animate, frames=15)
-    anim.save('dynamic_trends/' + name + '.gif', writer=animation.PillowWriter(fps=2))
+    anim.save(name + '.gif', writer=animation.PillowWriter(fps=2))
     
 def convert_to_percent(x):
     str_x = '%.3f' % (x * 100) + '%'
