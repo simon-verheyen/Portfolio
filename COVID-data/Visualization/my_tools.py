@@ -104,11 +104,11 @@ def plot_spread(subj, per, countries=countries_all, scale='lin', days=len(dates_
         threshold_filter = 'deaths'
         
     df1 = eval('df_' + subj + '_' + per)
-    title1 = per.capitalize() + subj.capitalize()
+    title1 = per.capitalize() + ' ' + subj
             
     if scale == 'log':
-        title1 = title1 + ' (log scale, normalizing translation)'
-        title2 = title2 + ' (log scale, normalizing translation)'
+        title1 = title1 + ' (log scale, norm translation)'
+        title2 = title2 + ' (log scale, norm translation)'
         leg1 = False
         leg2 = True
         label1 = 'Days since 100 cases'
@@ -152,7 +152,6 @@ def plot_spread(subj, per, countries=countries_all, scale='lin', days=len(dates_
     
 def threshold_data(df, subj, per, countries=[], reset=True):
     d = {}
-
     for country in countries:
         start_date = df_thresholds.at[subj, country]
 
@@ -167,6 +166,13 @@ def threshold_data(df, subj, per, countries=[], reset=True):
         d[country] = country_data
 
     df_new = pd.DataFrame(d)
+    if reset:
+        if per == '3days':
+            df_new['index'] = df_new.reset_index()['index'] * 3
+            df_new = df_new.set_index('index')
+        elif per == 'weekly':
+            df_new['index'] = df_new.reset_index()['index'] * 7
+            df_new = df_new.set_index('index')
 
     return df_new
 
@@ -203,7 +209,7 @@ def plot_trends(countries=countries_all, log=True, subj='spread', per='weekly'):
         plt.xscale('log')
         plt.yscale('log')
         
-    plt.title('Trends')
+    plt.title('Trends (log scale)')
     plt.show()
     
 def plot_trends_dynamically(name, countries=[]):
@@ -235,79 +241,45 @@ def plot_trends_dynamically(name, countries=[]):
         
         ax.annotate(df_x_full.index[i].date(), xy=(0.85, 0.05), xycoords='axes fraction', fontsize=15)
         ax.legend(loc="upper left", frameon=False)
-        ax.set_title('Trends (logarithmic scale)')
+        ax.set_title('Trends (log scale)')
         
     anim = animation.FuncAnimation(fig, animate, frames=15)
     anim.save('Dynamic-Trends/' + name + '.gif', writer=animation.PillowWriter(fps=2))
     
-def convert_to_percent(x):
-    str_x = '%.3f' % (x * 100) + '%'
-    
-    return str_x
+def convert_to_percent(x):    
+    return '%.3f' % (x * 100) + '%'
     
 def show_table(countries=countries_all):
     if 'Global' not in countries:
         countries = ['Global'] + countries
     
-    dict_data = {}
     ind = [[],[]]
-    daily = []
-    days = []
-    weekly = []
-    total = []
-    prevalence = []
-    incidence_daily = []
-    incidence_3days = []
-    incidence_weekly = []
-    mortality = []
-    
+    dict_data = {'Total': [], 'Prevalence': [], 'Mortality': [], 'Today': [], '3 days av': [], 
+                 'Weekly av': [], 'Incidence today': [], 'Incidence 3 days av': [], 'Incidence weekly av': []}
     
     for country in countries:
-        ind[0].append(country)
-        ind[0].append(country)
+        ind[0] = ind[0] + [country, country]
+        ind[1] = ind[1] + ['Cases', 'Deaths']
         
-        ind[1].append('Cases')
-        ind[1].append('Deaths')
+        dict_data['Total'] = dict_data['Total'] + [df_cases_total[country].values[-1], df_deaths_total[country].values[-1]]
+        dict_data['Prevalence'] = dict_data['Prevalence'] + [convert_to_percent(df_prevalence[country].values[-1]), '']
+        dict_data['Mortality'] = dict_data['Mortality'] + ['', convert_to_percent(df_mortality[country].values[-1])]
         
-        daily.append(df_cases_daily[country].values[-1])
-        daily.append(df_deaths_daily[country].values[-1])
+        add_today = [df_cases_daily[country].values[-1], df_deaths_daily[country].values[-1]]
+        add_3days = [int(df_cases_3days[country].values[-1]), int(df_deaths_3days[country].values[-1])]
+        add_weekly = [int(df_cases_weekly[country].values[-1]), int(df_deaths_weekly[country].values[-1])]
         
-        days.append(int(df_cases_3days[country].values[-1]))
-        days.append(int(df_deaths_3days[country].values[-1]))
+        dict_data['Today'] = dict_data['Today'] + add_today
+        dict_data['3 days av'] = dict_data['3 days av'] + add_3days
+        dict_data['Weekly av'] = dict_data['Weekly av'] + add_weekly
         
-        weekly.append(int(df_cases_weekly[country].values[-1]))
-        weekly.append(int(df_deaths_weekly[country].values[-1]))
+        add_today = [convert_to_percent(df_incidence_daily[country].values[-1]), '']
+        add_3days = [convert_to_percent(df_incidence_3days[country].values[-1]), '']
+        add_weekly = [convert_to_percent(df_incidence_weekly[country].values[-1]), '']
         
-        total.append(df_cases_total[country].values[-1])
-        total.append(df_deaths_total[country].values[-1])
-        
-        prevalence.append(convert_to_percent(df_prevalence[country].values[-1]))
-        prevalence.append('')
-            
-        incidence_daily.append(convert_to_percent(df_incidence_daily[country].values[-1]))
-        incidence_daily.append('')
-        
-        incidence_3days.append(convert_to_percent(df_incidence_3days[country].values[-1]))
-        incidence_3days.append('')
-                      
-        incidence_weekly.append(convert_to_percent(df_incidence_weekly[country].values[-1]))
-        incidence_weekly.append('')
-                      
-        mortality.append('')
-        mortality.append(convert_to_percent(df_mortality[country].values[-1]))
-    
-    dict_data['Total'] = total
-    dict_data['Prevalence'] = prevalence
-    
-    dict_data['Cases today'] = daily
-    dict_data['Cases 3 day av'] = weekly
-    dict_data['Cases Weekly av'] = weekly
-    
-    dict_data['Incidence today'] = incidence_daily
-    dict_data['Incidence 3day av'] = incidence_daily
-    dict_data['Incidence weekly av'] = incidence_weekly
-
-    dict_data['Mortality'] = mortality
+        dict_data['Incidence today'] = dict_data['Incidence today'] + add_today
+        dict_data['Incidence 3 days av'] = dict_data['Incidence 3 days av'] + add_3days          
+        dict_data['Incidence weekly av'] = dict_data['Incidence weekly av'] + add_weekly
     
     df = pd.DataFrame(dict_data, index=ind)
         

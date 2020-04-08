@@ -1,18 +1,20 @@
 # Data visualizations
 
-This directory holds the notebooks that show the collected data through graphs on interesting collections of countries in a structured way.
-For each topic there is be an accompanying notebook (-Explanation) that will go over why each graph is shown and how to read and interpret them.
+This directory holds the worksheets that visualise collected data through graphs a table.
+For each selection of countries, there is be a worksheet with the same layout of visualizations.<br> Only for the recovered countries only the table is shown, since as of yet, no country with interesting data has overcome the outbreak yet.
+Though this will be updated in the future.
 
-The my_tools.py file contains all the code that is used to manage the datasets and create the needed graphs, for those that are interested. 
+Dynamic-Trends/ contains GIFs that show the trend graphs evolving over time.
+
+my_tools.py contains all the code that is used to manage the graphs. 
 
 ### Work order: 
- - Add countries that beat outbreak to spread data
- - Finalize spread graphs explanations.
-  
+
  - Add highlights in data tables
+ - Improve plot readability
+ - Improve finding interesting countries
  
- - Add country impact graphs
- - Add country impact explanations
+ - Connect to other dbs
  
  - Analyse spread data
  - Analyse impact data
