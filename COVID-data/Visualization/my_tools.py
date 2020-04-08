@@ -91,13 +91,17 @@ def plot_spread(subj, per, countries=countries_all, scale='lin', days=len(dates_
     label1 = ''
     label2 = ''
     leg_loc = 'upper left'
+    leg1 = True
+    leg2 = False
     
     if subj == 'incidence':
         df2 = df_prevalence
         title2 = 'Prevalence (total cases / population)'
+        threshold_filter = 'cases'
     elif subj == 'cases':
         df2 = df2 = eval('df_deaths_' + per)
         title2 = per.capitalize() + ' deaths'
+        threshold_filter = 'deaths'
         
     df1 = eval('df_' + subj + '_' + per)
     title1 = per.capitalize() + subj.capitalize()
@@ -105,7 +109,8 @@ def plot_spread(subj, per, countries=countries_all, scale='lin', days=len(dates_
     if scale == 'log':
         title1 = title1 + ' (log scale, normalizing translation)'
         title2 = title2 + ' (log scale, normalizing translation)'
-        
+        leg1 = False
+        leg2 = True
         label1 = 'Days since 100 cases'
         label2 = 'Days since 10 deaths'
         
@@ -115,7 +120,7 @@ def plot_spread(subj, per, countries=countries_all, scale='lin', days=len(dates_
             else:
                 leg_loc = 'upper right'
         else: 
-            leg_loc = 'upper right'
+            leg_loc = 'lower right'
         
         ax1.set_yscale('log')
         ax2.set_yscale('log')
@@ -124,15 +129,18 @@ def plot_spread(subj, per, countries=countries_all, scale='lin', days=len(dates_
             per = 'daily'
         
         df1 = threshold_data(df1, 'cases', per, countries)
-        df2 = threshold_data(df2, 'deaths', per, countries)
+        df2 = threshold_data(df2, threshold_filter, per, countries)
         
     if len(countries) == len(countries_all):
         df1.tail(days).plot(figsize=(17, 6), ax=ax1, legend=False)
         df2.tail(days).plot(figsize=(17, 6), ax=ax2, legend=False) 
     else: 
-        df1[countries].tail(days).plot(figsize=(17, 6), ax=ax1)
-        df2[countries].tail(days).plot(figsize=(17, 6), ax=ax2, legend=False)
-        ax1.legend(frameon=False, loc=leg_loc)
+        df1[countries].tail(days).plot(figsize=(17, 6), ax=ax1, legend=leg1)
+        df2[countries].tail(days).plot(figsize=(17, 6), ax=ax2, legend=leg2)
+        if leg1:
+            ax1.legend(frameon=False, loc=leg_loc)
+        else:
+            ax2.legend(frameon=False, loc=leg_loc)
         
             
     ax1.set_title(title1)
@@ -230,7 +238,7 @@ def plot_trends_dynamically(name, countries=[]):
         ax.set_title('Trends (logarithmic scale)')
         
     anim = animation.FuncAnimation(fig, animate, frames=15)
-    anim.save(name + '.gif', writer=animation.PillowWriter(fps=2))
+    anim.save('Dynamic-Trends/' + name + '.gif', writer=animation.PillowWriter(fps=2))
     
 def convert_to_percent(x):
     str_x = '%.3f' % (x * 100) + '%'
@@ -264,11 +272,11 @@ def show_table(countries=countries_all):
         daily.append(df_cases_daily[country].values[-1])
         daily.append(df_deaths_daily[country].values[-1])
         
-        days.append(df_cases_3days[country].values[-1])
-        days.append(df_deaths_3days[country].values[-1])
+        days.append(int(df_cases_3days[country].values[-1]))
+        days.append(int(df_deaths_3days[country].values[-1]))
         
-        weekly.append(df_cases_weekly[country].values[-1])
-        weekly.append(df_deaths_weekly[country].values[-1])
+        weekly.append(int(df_cases_weekly[country].values[-1]))
+        weekly.append(int(df_deaths_weekly[country].values[-1]))
         
         total.append(df_cases_total[country].values[-1])
         total.append(df_deaths_total[country].values[-1])
@@ -288,16 +296,16 @@ def show_table(countries=countries_all):
         mortality.append('')
         mortality.append(convert_to_percent(df_mortality[country].values[-1]))
     
-    dict_data['Today'] = daily
-    dict_data['3 day av'] = weekly
-    dict_data['Weekly av'] = weekly
+    dict_data['Total'] = total
+    dict_data['Prevalence'] = prevalence
+    
+    dict_data['Cases today'] = daily
+    dict_data['Cases 3 day av'] = weekly
+    dict_data['Cases Weekly av'] = weekly
     
     dict_data['Incidence today'] = incidence_daily
     dict_data['Incidence 3day av'] = incidence_daily
     dict_data['Incidence weekly av'] = incidence_weekly
-    
-    dict_data['Total'] = total
-    dict_data['Prevalence'] = prevalence
 
     dict_data['Mortality'] = mortality
     
