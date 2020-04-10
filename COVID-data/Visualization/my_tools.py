@@ -43,6 +43,7 @@ dates_weekly = df_cases_weekly.index
 global_all = ['Global', 'Africa', 'Asia', 'Europe', 'North America', 'Oceania', 'South America']
 
 latest_date = dates_daily[-1]
+print('Latest update at ' + str(datetime.date.today()))
 
 
 def worst_in_crit(subj, date=latest_date, period=6):
@@ -85,6 +86,14 @@ def find_crit(subj, period=6):
         list2 = worst_in_crit(crit2, period=period)
 
         return list1.intersection(list2).tolist()
+    
+def plot_mortality(countries=[], days=len(dates_daily)):
+    df = threshold_data(df_mortality, 'deaths', 'daily', countries) * 100           
+    ax = df[countries].tail(days).plot(figsize=(17, 6))
+    ax.legend(loc='upper right', frameon=False)
+    ax.set_title('Mortality')
+    ax.set_ylabel('Total deaths / Total cases')
+    ax.set_xlabel('Days since 10 deaths')              
     
 def plot_spread(subj, per, countries=countries_all, scale='lin', days=len(dates_daily)):
     fig, (ax1, ax2) = plt.subplots(ncols=2)
@@ -241,9 +250,9 @@ def plot_trends_dynamically(name, countries=[]):
         
         ax.annotate(df_x_full.index[i].date(), xy=(0.85, 0.05), xycoords='axes fraction', fontsize=15)
         ax.legend(loc="upper left", frameon=False)
-        ax.set_title('Trends (log scale)')
+        ax.set_title('Trends (log scale) in steps per week.')
         
-    anim = animation.FuncAnimation(fig, animate, frames=15)
+    anim = animation.FuncAnimation(fig, animate, frames=20)
     anim.save('Dynamic-Trends/' + name + '.gif', writer=animation.PillowWriter(fps=2))
     
 def convert_to_percent(x):    
