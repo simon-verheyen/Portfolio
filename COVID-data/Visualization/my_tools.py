@@ -44,7 +44,7 @@ global_all = ['Global', 'Africa', 'Asia', 'Europe', 'North America', 'Oceania', 
 
 latest_date = dates_daily[-1]
 print('Latest update at ' + str(datetime.date.today()))
-
+print('Latest data point at ' + str(latest_date.date()))
 
 def worst_in_crit(subj, date=latest_date, period=6):
     df = eval('df_' + subj)
@@ -88,20 +88,25 @@ def find_crit(subj, period=6):
         return list1.intersection(list2).tolist()
     
 def plot_mortality(countries=[], days=len(dates_daily)):
-    df = threshold_data(df_mortality, 'deaths', 'daily', countries) * 100           
+    df = threshold_data(df_mortality, 'deaths', 'daily', countries, reset=False)           
     ax = df[countries].tail(days).plot(figsize=(17, 6))
-    ax.legend(loc='upper right', frameon=False)
+
+    ax.legend(loc='upper left', frameon=False)
     ax.set_title('Mortality')
     ax.set_ylabel('Total deaths / Total cases')
     ax.set_xlabel('Days since 10 deaths')              
     
-def plot_spread(subj, per, countries=countries_all, scale='lin', days=len(dates_daily)):
+def plot_spread(subj, per, countries=countries_all, scale='lin', days=len(dates_daily), leg='l'):
     fig, (ax1, ax2) = plt.subplots(ncols=2)
     label1 = ''
     label2 = ''
     leg_loc = 'upper left'
-    leg1 = True
-    leg2 = False
+    if leg == 'l':   
+        leg1 = True
+        leg2 = False
+    else:
+        leg1 = False
+        leg2 = True
     
     if subj == 'incidence':
         df2 = df_prevalence
@@ -118,8 +123,6 @@ def plot_spread(subj, per, countries=countries_all, scale='lin', days=len(dates_
     if scale == 'log':
         title1 = title1 + ' (log scale, norm translation)'
         title2 = title2 + ' (log scale, norm translation)'
-        leg1 = False
-        leg2 = True
         label1 = 'Days since 100 cases'
         label2 = 'Days since 10 deaths'
         
@@ -222,7 +225,7 @@ def plot_trends(countries=countries_all, log=True, subj='spread', per='weekly'):
     plt.show()
     
 def plot_trends_dynamically(name, countries=[]):
-    fig, ax = plt.subplots(figsize=(13,9))
+    fig, ax = plt.subplots(figsize=(17,9))
     leg = ax.legend()
     
     df_x_full = threshold_data(df_prevalence, 'cases', 'weekly', countries, reset=False)
