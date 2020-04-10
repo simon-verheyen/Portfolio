@@ -26,7 +26,7 @@ df_deaths_3days = read_csv('deaths_3days', '3 days average  deaths')
 df_deaths_weekly = read_csv('deaths_weekly', 'Weekly deaths')
 df_deaths_total = read_csv('deaths_total', 'Total deaths')
 
-
+'../data/deaths_population.csv'
 df_incidence_daily = read_csv('incidence_daily', 'Daily incidence')
 df_incidence_3days = read_csv('incidence_3days', '3days incidence')
 df_incidence_weekly = read_csv('incidence_weekly', 'Weekly incidence')
@@ -34,6 +34,7 @@ df_incidence_weekly = read_csv('incidence_weekly', 'Weekly incidence')
 df_thresholds = pd.read_csv('../data/thresholds.csv').set_index('ind')
                               
 df_prevalence = read_csv('prevalence', 'Prevalence')
+df_deaths_population = read_csv('deaths_population', 'Deaths over population')
 df_mortality = read_csv('mortality', 'Mortality')
 
 countries_all = df_cases_daily.columns
@@ -89,13 +90,24 @@ def find_crit(subj, period=6):
         return list1.intersection(list2).tolist()
     
 def plot_mortality(countries=[], days=len(dates_daily)):
-    df = threshold_data(per_million(df_mortality), 'deaths', 'daily', countries, reset=False)        
-    ax = df[countries].tail(days).plot(figsize=(17, 6))
+    fig, (ax1, ax2) = plt.subplots(ncols=2)
+    
+    df1 = threshold_data(df_mortality * 100, 'deaths', 'daily', countries, reset=False)
+    df2 = threshold_data(per_million(df_deaths_population), 'deaths', 'daily', countries, reset=False)
+    df1[countries].tail(days).plot(figsize=(17, 6), ax=ax1)
+    df2[countries].tail(days).plot(figsize=(17, 6), ax=ax2, legend=False)
 
-    ax.legend(loc='upper left', frameon=False)
-    ax.set_title('Mortality (per million)')
-    ax.set_ylabel('Deaths / Million cases')
-    ax.set_xlabel('Days since 10 deaths')              
+    ax1.legend(loc='upper left', frameon=False)
+    ax1.yaxis.set_major_formatter(ticker.PercentFormatter())
+    
+    ax1.set_title('Mortality')
+    ax1.set_ylabel('Deaths / Cases')
+    ax1.set_xlabel('')    
+    
+    ax2.set_title('Deaths in population')
+    ax2.set_ylabel('Deaths per million')
+    ax2.set_xlabel('')              
+    
     
 def plot_spread(subj, per, countries=countries_all, scale='lin', days=len(dates_daily), leg='l'):
     fig, (ax1, ax2) = plt.subplots(ncols=2)
