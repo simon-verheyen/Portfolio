@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib import animation
+import matplotlib.ticker as ticker
 import numpy as np
 import pandas as pd
 import datetime
@@ -88,12 +89,12 @@ def find_crit(subj, period=6):
         return list1.intersection(list2).tolist()
     
 def plot_mortality(countries=[], days=len(dates_daily)):
-    df = threshold_data(df_mortality, 'deaths', 'daily', countries, reset=False)           
+    df = threshold_data(per_million(df_mortality), 'deaths', 'daily', countries, reset=False)        
     ax = df[countries].tail(days).plot(figsize=(17, 6))
 
     ax.legend(loc='upper left', frameon=False)
-    ax.set_title('Mortality')
-    ax.set_ylabel('Total deaths / Total cases')
+    ax.set_title('Mortality (per million)')
+    ax.set_ylabel('Deaths / Million cases')
     ax.set_xlabel('Days since 10 deaths')              
     
 def plot_spread(subj, per, countries=countries_all, scale='lin', days=len(dates_daily), leg='l'):
@@ -109,23 +110,39 @@ def plot_spread(subj, per, countries=countries_all, scale='lin', days=len(dates_
         leg2 = True
     
     if subj == 'incidence':
-        df2 = df_prevalence
-        title2 = 'Prevalence (total cases / population)'
-        threshold_filter = 'cases'
-    elif subj == 'cases':
-        df2 = df2 = eval('df_deaths_' + per)
-        title2 = per.capitalize() + ' deaths'
-        threshold_filter = 'deaths'
+        df1 = per_million(eval('df_' + subj + '_' + per))
+        df2 = per_million(df_prevalence)
         
-    df1 = eval('df_' + subj + '_' + per)
-    title1 = per.capitalize() + ' ' + subj
+        title1 = 'Incidence ' 
+        title2 = 'Prevalence (total)'
+        ax1.set_ylabel('New cases per million')
+        ax2.set_ylabel('Cases per million')
+        threshold_filter = 'cases'
+        
+    elif subj == 'cases':
+        df1 = eval('df_' + subj + '_' + per)
+        df2 = eval('df_deaths_' + per)
+        title1 = 'New cases'
+        title2 = 'New deaths'
+        threshold_filter = 'deaths'
+        if per == '3days':
+            title2 = title2 + ' (3 day av.)'
+        elif per == 'weekly':
+            title2 = title2 + ' (weekly av.)' 
+        elif per == 'daily': 
+            title2 = title2 + ' (daily)'
+        
+    if per == '3days':
+        title1 = title1 + ' (3 day av.)'
+    elif per == 'weekly':
+        title1 = title1 + ' (weekly av.)' 
+    elif per == 'daily': 
+        title1 = title1 + ' (daily)'
+    else:
+        title1 = 'Total cases'
+        title2 = 'Total deaths'
             
     if scale == 'log':
-        title1 = title1 + ' (log scale, norm translation)'
-        title2 = title2 + ' (log scale, norm translation)'
-        label1 = 'Days since 100 cases'
-        label2 = 'Days since 10 deaths'
-        
         if subj == 'cases':
             if per == 'total':
                 leg_loc = 'lower right'
@@ -136,6 +153,12 @@ def plot_spread(subj, per, countries=countries_all, scale='lin', days=len(dates_
         
         ax1.set_yscale('log')
         ax2.set_yscale('log')
+        
+        label1 = 'Days since 100 cases'
+        label2 = 'Days since 10 deaths'
+        
+        ax1.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y,pos: ('{{:.{:1d}f}}'.format(int(np.maximum(-np.log10(y),0)))).format(y)))
+        ax2.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y,pos: ('{{:.{:1d}f}}'.format(int(np.maximum(-np.log10(y),0)))).format(y)))
         
         if per == 'total':
             per = 'daily'
@@ -152,12 +175,11 @@ def plot_spread(subj, per, countries=countries_all, scale='lin', days=len(dates_
         if leg1:
             ax1.legend(frameon=False, loc=leg_loc)
         else:
-            ax2.legend(frameon=False, loc=leg_loc)
+            ax2.legend(frameon=False, loc=leg_loc)    
         
-            
     ax1.set_title(title1)
-    ax1.set_xlabel(label1)
     ax2.set_title(title2)
+    ax1.set_xlabel(label1)
     ax2.set_xlabel(label2)
 
     plt.show()
@@ -187,6 +209,94 @@ def threshold_data(df, subj, per, countries=[], reset=True):
             df_new = df_new.set_index('index')
 
     return df_new
+    
+def plot_trends_dynamically(name, countries=[]):
+    fig, ax = plt.subplots(figsize=(17,9))
+    leg = ax.legend()
+    
+    df_x_full = threshold_data(per_million(df_prevalence), 'cases', 'weekly', countries, reset=False)
+    df_y_full = threshold_data(per_million(df_incidence_weekly), 'cases', 'weekly', countries, reset=False)
+    
+    def animate(i):
+        ax.clear()
+        
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+        ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda y,pos: ('{{:.{:1d}f}}'.format(int(np.maximum(-np.log10(y),0)))).format(y)))
+        ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y,pos: ('{{:.{:1d}f}}'.format(int(np.maximum(-np.log10(y),0)))).format(y)))
+        ax.set_xlabel('Prevalence (Cases per Million)')
+        ax.set_ylabel('Incidence (New cases per million)')
+
+        i += 1
+        for country in countries:
+            x = df_x_full.iloc[:i][country]
+            y = df_y_full.iloc[:i][country]
+            
+            line, = ax.plot(x, y, '-o', markevery=[-1],label=country)
+            plt.annotate(country, (x[-1],y[-1]), textcoords="offset points", xytext=(5,10), ha='right', color=line.get_color())
+        
+        if i > len(df_x_full) - 1:
+            i = len(df_x_full) - 1
+        
+        ax.annotate(df_x_full.index[i].date(), xy=(0.85, 0.05), xycoords='axes fraction', fontsize=15)
+        ax.legend(loc="upper left", frameon=False)
+        ax.set_title('Trends (steps per week)')
+
+    anim = animation.FuncAnimation(fig, animate, frames=20)
+    anim.save('Dynamic-Trends/' + name + '.gif', writer=animation.PillowWriter(fps=2))
+
+def per_million(x):
+    if isinstance(x, pd.DataFrame):
+        x_new = x * 1000000
+        x_new.astype('int')
+    elif isinstance(x, float):
+        x_new = int(x * 1000000)
+        
+    return x_new
+    
+def percent(x):
+    return f'{x * 100:.3f}%'
+    
+def show_table(countries=countries_all):
+    if 'Global' not in countries:
+        countries = ['Global'] + countries
+    
+    ind = [[],[]]
+    dict_data = {'Total': [], 'Prevalence': [], 'Mortality': [], 'Today': [], '3 days av': [], 
+                 'Weekly av': [], 'Incidence today': [], 'Incidence 3 days av': [], 'Incidence weekly av': []}
+    
+    for country in countries:
+        ind[0] = ind[0] + [country, country]
+        ind[1] = ind[1] + ['Cases', 'Deaths']
+        
+        dict_data['Total'] = dict_data['Total'] + [df_cases_total[country].values[-1], df_deaths_total[country].values[-1]]
+        dict_data['Prevalence'] = dict_data['Prevalence'] + [percent(df_prevalence[country].values[-1]), '']
+        dict_data['Mortality'] = dict_data['Mortality'] + ['', percent(df_mortality[country].values[-1])]
+        
+        add_today = [df_cases_daily[country].values[-1], df_deaths_daily[country].values[-1]]
+        add_3days = [int(df_cases_3days[country].values[-1]), int(df_deaths_3days[country].values[-1])]
+        add_weekly = [int(df_cases_weekly[country].values[-1]), int(df_deaths_weekly[country].values[-1])]
+        
+        dict_data['Today'] = dict_data['Today'] + add_today
+        dict_data['3 days av'] = dict_data['3 days av'] + add_3days
+        dict_data['Weekly av'] = dict_data['Weekly av'] + add_weekly
+        
+        add_today = [percent(df_incidence_daily[country].values[-1]), '']
+        add_3days = [percent(df_incidence_3days[country].values[-1]), '']
+        add_weekly = [percent(df_incidence_weekly[country].values[-1]), '']
+        
+        dict_data['Incidence today'] = dict_data['Incidence today'] + add_today
+        dict_data['Incidence 3 days av'] = dict_data['Incidence 3 days av'] + add_3days          
+        dict_data['Incidence weekly av'] = dict_data['Incidence weekly av'] + add_weekly
+    
+    df = pd.DataFrame(dict_data, index=ind)
+        
+    return df.style
+
+"""
+OLD FUNCTIONS:
+
+
 
 def plot_trends(countries=countries_all, log=True, subj='spread', per='weekly'):
     plt.figure(figsize=(17,9))
@@ -220,79 +330,11 @@ def plot_trends(countries=countries_all, log=True, subj='spread', per='weekly'):
     if log:
         plt.xscale('log')
         plt.yscale('log')
+        plt.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y,pos: ('{{:.{:1d}f}}'.format(int(np.maximum(-np.log10(y),0)))).format(y)))
+        plt.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y,pos: ('{{:.{:1d}f}}'.format(int(np.maximum(-np.log10(y),0)))).format(y)))
+        ax.set_xlabel('Prevalence (Cases per Million)')
+        ax.set_ylabel('Incidence (New cases per million)')
         
     plt.title('Trends (log scale)')
     plt.show()
-    
-def plot_trends_dynamically(name, countries=[]):
-    fig, ax = plt.subplots(figsize=(17,9))
-    leg = ax.legend()
-    
-    df_x_full = threshold_data(df_prevalence, 'cases', 'weekly', countries, reset=False)
-    df_y_full = threshold_data(df_incidence_weekly, 'cases', 'weekly', countries, reset=False)
-    
-    def animate(i):
-        ax.clear()
-        
-        ax.set_xscale('log')
-        ax.set_yscale('log')
-
-        ax.set_xlabel('Prevalence (total cases / population)')
-        ax.set_ylabel('Incidence (weekly cases / population)')
-
-        i += 1
-        for country in countries:
-            x = df_x_full.iloc[:i][country]
-            y = df_y_full.iloc[:i][country]
-            
-            line, = ax.plot(x, y, '-o', markevery=[-1],label=country)
-            plt.annotate(country, (x[-1],y[-1]), textcoords="offset points", xytext=(5,10), ha='right', color=line.get_color())
-        
-        if i > len(df_x_full) - 1:
-            i = len(df_x_full) - 1
-        
-        ax.annotate(df_x_full.index[i].date(), xy=(0.85, 0.05), xycoords='axes fraction', fontsize=15)
-        ax.legend(loc="upper left", frameon=False)
-        ax.set_title('Trends (log scale) in steps per week.')
-        
-    anim = animation.FuncAnimation(fig, animate, frames=20)
-    anim.save('Dynamic-Trends/' + name + '.gif', writer=animation.PillowWriter(fps=2))
-    
-def convert_to_percent(x):    
-    return '%.3f' % (x * 100) + '%'
-    
-def show_table(countries=countries_all):
-    if 'Global' not in countries:
-        countries = ['Global'] + countries
-    
-    ind = [[],[]]
-    dict_data = {'Total': [], 'Prevalence': [], 'Mortality': [], 'Today': [], '3 days av': [], 
-                 'Weekly av': [], 'Incidence today': [], 'Incidence 3 days av': [], 'Incidence weekly av': []}
-    
-    for country in countries:
-        ind[0] = ind[0] + [country, country]
-        ind[1] = ind[1] + ['Cases', 'Deaths']
-        
-        dict_data['Total'] = dict_data['Total'] + [df_cases_total[country].values[-1], df_deaths_total[country].values[-1]]
-        dict_data['Prevalence'] = dict_data['Prevalence'] + [convert_to_percent(df_prevalence[country].values[-1]), '']
-        dict_data['Mortality'] = dict_data['Mortality'] + ['', convert_to_percent(df_mortality[country].values[-1])]
-        
-        add_today = [df_cases_daily[country].values[-1], df_deaths_daily[country].values[-1]]
-        add_3days = [int(df_cases_3days[country].values[-1]), int(df_deaths_3days[country].values[-1])]
-        add_weekly = [int(df_cases_weekly[country].values[-1]), int(df_deaths_weekly[country].values[-1])]
-        
-        dict_data['Today'] = dict_data['Today'] + add_today
-        dict_data['3 days av'] = dict_data['3 days av'] + add_3days
-        dict_data['Weekly av'] = dict_data['Weekly av'] + add_weekly
-        
-        add_today = [convert_to_percent(df_incidence_daily[country].values[-1]), '']
-        add_3days = [convert_to_percent(df_incidence_3days[country].values[-1]), '']
-        add_weekly = [convert_to_percent(df_incidence_weekly[country].values[-1]), '']
-        
-        dict_data['Incidence today'] = dict_data['Incidence today'] + add_today
-        dict_data['Incidence 3 days av'] = dict_data['Incidence 3 days av'] + add_3days          
-        dict_data['Incidence weekly av'] = dict_data['Incidence weekly av'] + add_weekly
-    
-    df = pd.DataFrame(dict_data, index=ind)
-        
-    return df.style
+"""
