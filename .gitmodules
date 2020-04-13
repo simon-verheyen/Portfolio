@@ -1,0 +1,3 @@
+[submodule "COVID"]
+	path = COVID
+	url = https://github.com/simon-verheyen/COVID
